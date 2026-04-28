@@ -1108,6 +1108,7 @@ function updateBtns() {
 // ⑳ TAB SWITCHING
 // ═══════════════════════════════════════════════
 function switchTab(tabId) {
+  switchSubTab("dfa");
   DFA = tabId === "01" ? DFA_01 : DFA_AB;
 
   // Update tab button styles
@@ -1136,6 +1137,27 @@ function switchTab(tabId) {
 
   // Kick off the DFA build-up animation for this tab's graph
   startBuildup();
+}
+
+function switchSubTab(subId) {
+  // Update sub-tab button states
+  ["dfa", "cfg", "pda"].forEach((id) => {
+    document
+      .getElementById("sub-" + id)
+      .classList.toggle("active", id === subId);
+  });
+
+  // DFA panel: toggle visibility (it's a .app div, not .placeholder-panel)
+  const dfaPanel = document.getElementById("panel-dfa");
+  dfaPanel.style.display = subId === "dfa" ? "" : "none";
+
+  // Placeholder panels: add/remove .active class
+  document
+    .getElementById("panel-cfg")
+    .classList.toggle("active", subId === "cfg");
+  document
+    .getElementById("panel-pda")
+    .classList.toggle("active", subId === "pda");
 }
 
 // ═══════════════════════════════════════════════

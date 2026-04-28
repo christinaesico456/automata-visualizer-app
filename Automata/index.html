@@ -16,7 +16,7 @@
         <span class="h-title">DFA Visualizer</span>
       </div>
 
-      <!-- TABS -->
+      <!-- MAIN TABS -->
       <nav class="tab-nav">
         <button class="tab-btn active" data-tab="ab">Σ = {a, b}</button>
         <button class="tab-btn" data-tab="01">Σ = {0, 1}</button>
@@ -25,8 +25,21 @@
       <div class="h-regex" id="headerRegex"></div>
     </header>
 
-    <!-- ── APP ── -->
-    <div class="app">
+    <!-- ── SUB-TAB BAR ── -->
+    <div class="sub-tab-bar">
+      <button class="sub-tab active" id="sub-dfa" onclick="switchSubTab('dfa')">
+        DFA
+      </button>
+      <button class="sub-tab" id="sub-cfg" onclick="switchSubTab('cfg')">
+        CFG
+      </button>
+      <button class="sub-tab" id="sub-pda" onclick="switchSubTab('pda')">
+        PDA
+      </button>
+    </div>
+
+    <!-- ── PANEL: DFA ── -->
+    <div class="app" id="panel-dfa">
       <!-- LEFT: CANVAS AREA -->
       <div class="canvas-wrap">
         <canvas id="dfaCanvas"></canvas>
@@ -97,6 +110,24 @@
         </div>
 
         <div id="resultBanner"></div>
+      </div>
+    </div>
+
+    <!-- ── PANEL: CFG ── -->
+    <div class="placeholder-panel" id="panel-cfg">
+      <div class="ph-content">
+        <span class="ph-icon"></span>
+        <p class="ph-title">CFG</p>
+        <p class="ph-sub">Context-Free Grammar content coming soon.</p>
+      </div>
+    </div>
+
+    <!-- ── PANEL: PDA ── -->
+    <div class="placeholder-panel" id="panel-pda">
+      <div class="ph-content">
+        <span class="ph-icon"></span>
+        <p class="ph-title">PDA</p>
+        <p class="ph-sub">Pushdown Automaton content coming soon.</p>
       </div>
     </div>
 
