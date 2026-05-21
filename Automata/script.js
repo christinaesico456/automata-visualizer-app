@@ -2,6 +2,7 @@
    DFA VISUALIZER — script.js
    Two tabs: {a,b} and {0,1}
    Spaceship/planet animation for transitions
+   Sub-tabs: DFA / CFG / PDA
 ════════════════════════════════════════════════════════ */
 
 // ═══════════════════════════════════════════════
@@ -17,90 +18,105 @@ const DFA_AB = {
 
   states: {
     start: { label: "−", isStart: true, isAccept: false, isTrap: false },
-    read_a: { label: "r(a)", isStart: false, isAccept: false, isTrap: false },
-    read_b: { label: "r(b)", isStart: false, isAccept: false, isTrap: false },
-    got_aa_wait: {
-      label: "aa?",
-      isStart: false,
-      isAccept: false,
-      isTrap: false,
-    },
-    got_bb_wait: {
-      label: "bb?",
-      isStart: false,
-      isAccept: false,
-      isTrap: false,
-    },
+    q1: { label: "−", isStart: false, isAccept: false, isTrap: false },
+    q2: { label: "−", isStart: false, isAccept: false, isTrap: false },
+    q3: { label: "−", isStart: false, isAccept: false, isTrap: false },
+    q4: { label: "−", isStart: false, isAccept: false, isTrap: false },
+    q6: { label: "−", isStart: false, isAccept: false, isTrap: false },
+    q7: { label: "−", isStart: false, isAccept: false, isTrap: false },
     trap: { label: "T", isStart: false, isAccept: false, isTrap: true },
     final1: { label: "+", isStart: false, isAccept: true, isTrap: false },
     final2: { label: "+", isStart: false, isAccept: true, isTrap: false },
   },
 
   transitions: {
-    start: { a: "read_a", b: "read_b" },
-    read_a: { a: "got_aa_wait", b: "trap" },
-    read_b: { a: "trap", b: "got_bb_wait" },
-    got_aa_wait: { a: "trap", b: "final1" },
-    got_bb_wait: { a: "final2", b: "trap" },
+    start: { a: "q1", b: "q2" },
+    q1: { a: "q3", b: "trap" },
+    q2: { a: "trap", b: "q4" },
+    q3: { a: "q6", b: "q6" },
+    q4: { a: "q7", b: "q7" },
+    q6: { a: "final1", b: "final1" },
+    q7: { a: "final2", b: "final2" },
     trap: { a: "trap", b: "trap" },
     final1: { a: "final1", b: "final1" },
     final2: { a: "final2", b: "final2" },
   },
 
-  // Logical canvas size: 860 x 460
   positions: {
-    start: { x: 90, y: 230 },
-    read_a: { x: 250, y: 120 },
-    read_b: { x: 250, y: 340 },
-    got_aa_wait: { x: 440, y: 120 },
-    got_bb_wait: { x: 440, y: 340 },
-    trap: { x: 610, y: 230 },
-    final1: { x: 760, y: 130 },
-    final2: { x: 760, y: 330 },
+    start: { x: 80, y: 235 },
+    q1: { x: 230, y: 110 },
+    q2: { x: 230, y: 360 },
+    q3: { x: 390, y: 110 },
+    q4: { x: 390, y: 360 },
+    q6: { x: 560, y: 110 },
+    q7: { x: 560, y: 360 },
+    trap: { x: 560, y: 235 },
+    final1: { x: 740, y: 110 },
+    final2: { x: 740, y: 360 },
   },
 };
 
-// {0,1} DFA — based on provided image
-// States from image: start, read_1, read_0, read_11, read_00, fixed, read_10, final
+// ─────────────────────────────────────────────────────────────
+// {0,1} DFA — pixel-perfect match to hand-drawn diagram
+//
+//  Hand-drawn layout (4 columns):
+//
+//   col1(x=75)   col2(x=280)   col3(x=530)   col4(x=840)
+//
+//   row-top(y=90):              sA            sC
+//   row-mid(y=250):  start                    sE            final
+//   row-bot(y=410):             sB            sD
+//
+//  Arrows:
+//   start --1--> sA     (diagonal up-right)
+//   start --0--> sB     (diagonal down-right)
+//   sA    --1--> sC     (rightward top)
+//   sA    --0--> sB     (downward, bidirectional with sB→sA)
+//   sB    --1--> sA     (upward, bidirectional)
+//   sB    --0--> sD     (rightward bottom)
+//   sC    --1--> sA     (leftward top, back; bidirectional with sA→sC)
+//   sC    --0--> sE     (downward, same x)
+//   sE    --1--> final  (rightward middle)
+//   sE    --0--> sD     (downward, same x)
+//   sD    --0--> final  (diagonal up-right to final)
+//   sD    --1--> sA     (long diagonal up-left)
+//   final --0,1-> final (self-loop top)
+// ─────────────────────────────────────────────────────────────
 const DFA_01 = {
   alphabet: ["0", "1"],
   regex:
-    "<em>((101)+(111)*+100)</em> + (1+0+11)*<em>(1+0+01)*</em>(111+000+101)(1+0)",
+    "<em>(|01| + (|11|)* + |00|)</em> + <em>(1+0+11)*</em>(1+0+01)* <em>(111+000+101)(1+0)*</em>",
   placeholder: "e.g. 101",
   defaultInput: "101",
 
   states: {
     start: { label: "−", isStart: true, isAccept: false, isTrap: false },
-    read_1: { label: "r(1)", isStart: false, isAccept: false, isTrap: false },
-    read_0: { label: "r(0)", isStart: false, isAccept: false, isTrap: false },
-    read_11: { label: "r(11)", isStart: false, isAccept: false, isTrap: false },
-    read_00: { label: "r(00)", isStart: false, isAccept: false, isTrap: false },
-    fixed: { label: "FIX", isStart: false, isAccept: false, isTrap: false },
-    read_10: { label: "r(10)", isStart: false, isAccept: false, isTrap: false },
+    sA: { label: "−", isStart: false, isAccept: false, isTrap: false },
+    sB: { label: "−", isStart: false, isAccept: false, isTrap: false },
+    sC: { label: "−", isStart: false, isAccept: false, isTrap: false },
+    sE: { label: "−", isStart: false, isAccept: false, isTrap: false },
+    sD: { label: "−", isStart: false, isAccept: false, isTrap: false },
     final: { label: "+", isStart: false, isAccept: true, isTrap: false },
   },
 
-  // Transitions read from the diagram image
   transitions: {
-    start: { 0: "read_0", 1: "read_1" },
-    read_1: { 0: "read_10", 1: "read_11" },
-    read_0: { 0: "read_00", 1: "fixed" },
-    read_11: { 0: "fixed", 1: "read_1" },
-    read_00: { 0: "read_0", 1: "read_10" },
-    fixed: { 0: "read_10", 1: "final" },
-    read_10: { 0: "final", 1: "final" },
+    start: { 0: "sB", 1: "sA" },
+    sA: { 0: "sB", 1: "sC" },
+    sB: { 0: "sD", 1: "sA" },
+    sC: { 0: "sE", 1: "sA" },
+    sE: { 0: "sD", 1: "final" },
+    sD: { 0: "final", 1: "sA" },
     final: { 0: "final", 1: "final" },
   },
 
   positions: {
-    start: { x: 80, y: 230 },
-    read_1: { x: 230, y: 120 },
-    read_0: { x: 230, y: 340 },
-    read_11: { x: 390, y: 80 },
-    read_00: { x: 390, y: 370 },
-    fixed: { x: 530, y: 190 },
-    read_10: { x: 620, y: 330 },
-    final: { x: 780, y: 230 },
+    start: { x: 75, y: 250 },
+    sA: { x: 280, y: 90 },
+    sB: { x: 280, y: 410 },
+    sC: { x: 530, y: 90 },
+    sE: { x: 530, y: 250 },
+    sD: { x: 530, y: 410 },
+    final: { x: 840, y: 250 },
   },
 };
 
@@ -111,12 +127,12 @@ const canvas = document.getElementById("dfaCanvas");
 const ctx = canvas.getContext("2d");
 
 // Logical canvas dimensions (we scale to fit)
-const W = 880,
-  H = 470;
+const W = 940,
+  H = 520;
 
 // Active DFA config
 let DFA = DFA_AB;
-const NODE_R = 30; // node radius (logical)
+const NODE_R = 34; // node radius (logical)
 
 // Execution state
 let inputStr = "";
@@ -133,45 +149,29 @@ let pulseT = 0; // 0→1 for node pulse ring
 let animRaf = null;
 let lastTime = 0;
 
-// Spaceship animation (managed by updateShipPos)
-// shipTrail and shipPos are declared near the spaceship section below
-
 // ═══════════════════════════════════════════════
 // BUILD-UP ANIMATION SYSTEM
 // ═══════════════════════════════════════════════
-// Plays on load and on every tab switch.
-// Phase 1 — planets fade+scale in, staggered.
-// Phase 2 — edges draw themselves (path trace), staggered.
-
 const BUILDUP = {
-  // Per-node entrance: { alpha 0→1, scale 0.4→1 }
-  nodeProgress: {}, // stateId → 0..1 (eased)
-  nodeStart: {}, // stateId → timestamp when this node starts
-
-  // Per-edge draw: fraction of path length drawn 0..1
-  edgeProgress: {}, // "from→to" → 0..1
-  edgeStart: {}, // "from→to" → timestamp when this edge starts
-
-  active: false, // true while build-up is running
-  startTime: 0, // performance.now() when sequence began
-
-  // Timing constants (ms)
-  NODE_STAGGER: 90, // delay between each successive node appearing
-  NODE_DURATION: 520, // how long each node takes to fully appear
-  EDGE_DELAY: 420, // ms after first node before edges start drawing
-  EDGE_STAGGER: 70, // delay between each successive edge
-  EDGE_DURATION: 480, // how long each edge takes to fully draw
+  nodeProgress: {},
+  nodeStart: {},
+  edgeProgress: {},
+  edgeStart: {},
+  active: false,
+  startTime: 0,
+  NODE_STAGGER: 90,
+  NODE_DURATION: 520,
+  EDGE_DELAY: 420,
+  EDGE_STAGGER: 70,
+  EDGE_DURATION: 480,
 };
 
-// Smooth ease-in-out (cubic)
 function easeInOut(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
-// Kick off a fresh build-up sequence for the current DFA
 function startBuildup() {
   const now = performance.now();
-
   BUILDUP.active = true;
   BUILDUP.startTime = now;
   BUILDUP.nodeProgress = {};
@@ -179,7 +179,6 @@ function startBuildup() {
   BUILDUP.edgeProgress = {};
   BUILDUP.edgeStart = {};
 
-  // Assign staggered start times to nodes (left→right, by x position)
   const stateIds = Object.keys(DFA.states);
   const sorted = [...stateIds].sort(
     (a, b) => DFA.positions[a].x - DFA.positions[b].x,
@@ -189,7 +188,6 @@ function startBuildup() {
     BUILDUP.nodeProgress[id] = 0;
   });
 
-  // Assign staggered start times to edges
   const edges = getAllEdges();
   edges.forEach((e, i) => {
     const key = `${e.from}→${e.to}`;
@@ -199,19 +197,15 @@ function startBuildup() {
   });
 }
 
-// Called every frame from animLoop — advances progress values
 function tickBuildup(now) {
   if (!BUILDUP.active) return;
-
   let allDone = true;
-
   for (const id of Object.keys(DFA.states)) {
     const elapsed = now - BUILDUP.nodeStart[id];
     const raw = Math.min(Math.max(elapsed / BUILDUP.NODE_DURATION, 0), 1);
     BUILDUP.nodeProgress[id] = easeInOut(raw);
     if (raw < 1) allDone = false;
   }
-
   for (const e of getAllEdges()) {
     const key = `${e.from}→${e.to}`;
     const elapsed = now - BUILDUP.edgeStart[key];
@@ -219,18 +213,15 @@ function tickBuildup(now) {
     BUILDUP.edgeProgress[key] = easeInOut(raw);
     if (raw < 1) allDone = false;
   }
-
   if (allDone) BUILDUP.active = false;
 }
 
-// How much of a node is visible right now (0..1)
 function nodeAlpha(id) {
   if (!BUILDUP.active && Object.keys(BUILDUP.nodeProgress).length === 0)
     return 1;
   return BUILDUP.nodeProgress[id] ?? 1;
 }
 
-// How much of an edge is drawn right now (0..1)
 function edgeProg(from, to) {
   if (!BUILDUP.active && Object.keys(BUILDUP.edgeProgress).length === 0)
     return 1;
@@ -248,7 +239,6 @@ function resizeCanvas() {
   const tapeH = 56;
   const gap = 11;
   const h = rect.height - tapeH - gap;
-
   canvas.width = rect.width * dpr;
   canvas.height = h * dpr;
   canvas.style.width = rect.width + "px";
@@ -279,19 +269,6 @@ function angleBetween(aId, bId) {
   return Math.atan2(b.y - a.y, b.x - a.x);
 }
 
-function straightEdgePts(from, to, offset = 0) {
-  const angle = angleBetween(from, to);
-  const perp = angle + Math.PI / 2;
-  const a = DFA.positions[from],
-    b = DFA.positions[to];
-  return {
-    sx: a.x + NODE_R * Math.cos(angle) + offset * Math.cos(perp),
-    sy: a.y + NODE_R * Math.sin(angle) + offset * Math.sin(perp),
-    ex: b.x - NODE_R * Math.cos(angle) + offset * Math.cos(perp),
-    ey: b.y - NODE_R * Math.sin(angle) + offset * Math.sin(perp),
-  };
-}
-
 function bezierPt(sx, sy, cpx, cpy, ex, ey, t) {
   return {
     x: (1 - t) * (1 - t) * sx + 2 * (1 - t) * t * cpx + t * t * ex,
@@ -306,29 +283,49 @@ function bezierTangent(sx, sy, cpx, cpy, ex, ey, t) {
   );
 }
 
-// For a given edge, return its curve control point
+// For a given edge, return its curve control point.
+// Uses the improved bidirectional bow from doc 2.
 function getEdgeCurve(from, to) {
   if (from === to) return null; // self-loop handled separately
 
+  const pFrom = DFA.positions[from];
+  const pTo = DFA.positions[to];
   const hasReverse =
     DFA.transitions[to] && Object.values(DFA.transitions[to]).includes(from);
-  const offset = hasReverse ? 14 : 0;
-  const { sx, sy, ex, ey } = straightEdgePts(from, to, offset);
 
-  const mx = (sx + ex) / 2,
-    my = (sy + ey) / 2;
-  const dx = ex - sx,
-    dy = ey - sy;
-  const len = Math.sqrt(dx * dx + dy * dy) || 1;
-  const nx = -dy / len,
-    ny = dx / len;
-  const curveAmt = hasReverse ? 20 : 7;
+  const angle = Math.atan2(pTo.y - pFrom.y, pTo.x - pFrom.x);
+
+  if (!hasReverse) {
+    // Straight (slightly curved) edge
+    return {
+      sx: pFrom.x + NODE_R * Math.cos(angle),
+      sy: pFrom.y + NODE_R * Math.sin(angle),
+      cpx: (pFrom.x + pTo.x) / 2,
+      cpy: (pFrom.y + pTo.y) / 2,
+      ex: pTo.x - NODE_R * Math.cos(angle),
+      ey: pTo.y - NODE_R * Math.sin(angle),
+    };
+  }
+
+  // Bidirectional pair: bow each arrow outward in opposite perpendicular directions
+  const CURVE_BOW = 42;
+  const EDGE_OFF = 16;
+  const perp = angle + Math.PI / 2;
+  const nx = Math.cos(perp),
+    ny = Math.sin(perp);
+
+  const sx = pFrom.x + NODE_R * Math.cos(angle) + EDGE_OFF * nx;
+  const sy = pFrom.y + NODE_R * Math.sin(angle) + EDGE_OFF * ny;
+  const ex = pTo.x - NODE_R * Math.cos(angle) + EDGE_OFF * nx;
+  const ey = pTo.y - NODE_R * Math.sin(angle) + EDGE_OFF * ny;
+  const mx = (sx + ex) / 2;
+  const my = (sy + ey) / 2;
 
   return {
     sx,
     sy,
-    cpx: mx + nx * curveAmt,
-    cpy: my + ny * curveAmt,
+    cpx: mx + nx * CURVE_BOW,
+    cpy: my + ny * CURVE_BOW,
     ex,
     ey,
   };
@@ -337,12 +334,10 @@ function getEdgeCurve(from, to) {
 // ═══════════════════════════════════════════════
 // ⑤ SPACESHIP — TRAIL + BODY
 // ═══════════════════════════════════════════════
-
 const TRAIL_MAX = 28;
-let shipTrail = []; // array of {x,y} world positions, oldest first
-let shipPos = null; // { x, y, angle } current
+let shipTrail = [];
+let shipPos = null;
 
-// Called every frame while activeEdge != null
 function updateShipPos() {
   if (!activeEdge) {
     shipPos = null;
@@ -382,17 +377,13 @@ function updateShipPos() {
   if (shipTrail.length > TRAIL_MAX) shipTrail.shift();
 }
 
-// Glowing fading trail of particles + line
 function drawTrail() {
   if (shipTrail.length < 2) return;
-
-  // Draw line segments oldest→newest with increasing opacity & width
   for (let i = 1; i < shipTrail.length; i++) {
-    const frac = i / shipTrail.length; // 0=oldest, 1=newest
+    const frac = i / shipTrail.length;
     const alpha = frac * frac * 0.9;
     const lw = 1.0 + frac * 3.0;
     const color = frac > 0.55 ? "#e0a830" : "#e06b45";
-
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.strokeStyle = color;
@@ -406,8 +397,6 @@ function drawTrail() {
     ctx.stroke();
     ctx.restore();
   }
-
-  // Particle blobs every few trail points
   for (let i = 2; i < shipTrail.length; i += 3) {
     const frac = i / shipTrail.length;
     ctx.save();
@@ -422,15 +411,13 @@ function drawTrail() {
   }
 }
 
-// The visible spaceship body
 function drawShipBody(x, y, angle) {
   ctx.save();
   ctx.translate(x, y);
-  ctx.rotate(angle); // nose points in direction of travel
-
+  ctx.rotate(angle);
   const S = 9;
 
-  // Engine exhaust glow (behind body)
+  // Engine exhaust glow
   const exG = ctx.createRadialGradient(-S * 0.8, 0, 0, -S * 0.8, 0, S);
   exG.addColorStop(0, "rgba(255,200,60,0.95)");
   exG.addColorStop(0.45, "rgba(224,107,69,0.6)");
@@ -449,12 +436,12 @@ function drawShipBody(x, y, angle) {
   ctx.shadowColor = "#e06b45";
   ctx.shadowBlur = 14;
   ctx.beginPath();
-  ctx.moveTo(S, 0); // nose
-  ctx.lineTo(-S * 0.55, -S * 0.55); // left wing
-  ctx.lineTo(-S * 0.25, -S * 0.18); // left wing root
-  ctx.lineTo(-S * 0.7, 0); // tail notch
-  ctx.lineTo(-S * 0.25, S * 0.18); // right wing root
-  ctx.lineTo(-S * 0.55, S * 0.55); // right wing
+  ctx.moveTo(S, 0);
+  ctx.lineTo(-S * 0.55, -S * 0.55);
+  ctx.lineTo(-S * 0.25, -S * 0.18);
+  ctx.lineTo(-S * 0.7, 0);
+  ctx.lineTo(-S * 0.25, S * 0.18);
+  ctx.lineTo(-S * 0.55, S * 0.55);
   ctx.closePath();
   const hullG = ctx.createLinearGradient(S, 0, -S * 0.7, 0);
   hullG.addColorStop(0, "#f5f0e8");
@@ -475,7 +462,6 @@ function drawShipBody(x, y, angle) {
   ctx.ellipse(S * 0.28, 0, S * 0.3, S * 0.19, 0, 0, 2 * Math.PI);
   ctx.fillStyle = "#3ab8a8";
   ctx.fill();
-  // highlight
   ctx.shadowBlur = 0;
   ctx.beginPath();
   ctx.ellipse(S * 0.21, -S * 0.05, S * 0.11, S * 0.07, -0.4, 0, 2 * Math.PI);
@@ -525,18 +511,16 @@ function getAllEdges() {
 function drawEdge(e, isActive) {
   const { from, to, syms } = e;
   const label = syms.join(", ");
-  const prog = edgeProg(from, to); // 0..1 build-up draw progress
-  if (prog <= 0) return; // not yet started
+  const prog = edgeProg(from, to);
+  if (prog <= 0) return;
 
-  const edgeColor = isActive ? "#c95f3f" : "#d8d0c4";
-  const lblColor = isActive ? "#c95f3f" : "#a09588";
-  const lw = isActive ? 1.8 : 1.2;
-
-  // During build-up, add a soft leading glow
+  const edgeColor = isActive ? "#c95f3f" : "#9a9088";
+  const lblColor = isActive ? "#c95f3f" : "#6b6258";
+  const lw = isActive ? 2.5 : 1.8;
   const buildGlow = BUILDUP.active && prog < 1;
 
   ctx.save();
-  ctx.globalAlpha = Math.min(prog * 2, 1); // fade in the first half of draw
+  ctx.globalAlpha = Math.min(prog * 2, 1);
   ctx.strokeStyle = edgeColor;
   ctx.lineWidth = lw;
 
@@ -546,20 +530,18 @@ function drawEdge(e, isActive) {
     const loopR = 23;
     const loopCY = p.y - NODE_R - 28;
     const startA = Math.PI + 0.42;
-    const fullSpan = 2 * Math.PI - 0.84; // endA - startA
+    const fullSpan = 2 * Math.PI - 0.84;
     const endDraw = startA + fullSpan * prog;
 
     if (buildGlow) {
       ctx.shadowColor = edgeColor;
       ctx.shadowBlur = 8;
     }
-
     ctx.beginPath();
     ctx.arc(p.x, loopCY, loopR, startA, endDraw, false);
     ctx.stroke();
     ctx.shadowBlur = 0;
 
-    // Draw arrow and label only when nearly complete
     if (prog > 0.88) {
       const arrowAlpha = (prog - 0.88) / 0.12;
       ctx.globalAlpha = Math.min(arrowAlpha, 1) * Math.min(prog * 2, 1);
@@ -591,8 +573,6 @@ function drawEdge(e, isActive) {
   // ── REGULAR EDGE ──
   const curve = getEdgeCurve(from, to);
   const { sx, sy, cpx, cpy, ex, ey } = curve;
-
-  // Trace the bezier path up to `prog` using many tiny segments
   const STEPS = 40;
   const drawSteps = Math.floor(prog * STEPS);
 
@@ -600,7 +580,6 @@ function drawEdge(e, isActive) {
     ctx.shadowColor = edgeColor;
     ctx.shadowBlur = 8;
   }
-
   ctx.beginPath();
   ctx.moveTo(sx, sy);
   for (let i = 1; i <= drawSteps; i++) {
@@ -636,15 +615,8 @@ function drawEdge(e, isActive) {
 
     const lpt = bezierPt(sx, sy, cpx, cpy, ex, ey, 0.5);
     const tang = bezierTangent(sx, sy, cpx, cpy, ex, ey, 0.5);
-    const hasReverse =
-      DFA.transitions[to] && Object.values(DFA.transitions[to]).includes(from);
-    const dx = ex - sx,
-      dy = ey - sy;
-    const len = Math.sqrt(dx * dx + dy * dy) || 1;
-    const nx = -dy / len,
-      ny = dx / len;
-    const lx = lpt.x + (hasReverse ? nx * 17 : -Math.sin(tang) * 13);
-    const ly = lpt.y + (hasReverse ? ny * 17 : Math.cos(tang) * 13);
+    const lx = lpt.x + -Math.sin(tang) * 13;
+    const ly = lpt.y + Math.cos(tang) * 13;
 
     ctx.font = '400 10px "DM Mono", monospace';
     const tw2 = ctx.measureText(label).width;
@@ -667,10 +639,9 @@ function drawEdge(e, isActive) {
 function drawNode(id, isActive) {
   const p = DFA.positions[id];
   const s = DFA.states[id];
-  const prog = nodeAlpha(id); // 0..1 from build-up
+  const prog = nodeAlpha(id);
   if (prog <= 0) return;
 
-  // accent color per state type
   const accent = s.isTrap
     ? "#c95f3f"
     : s.isAccept
@@ -681,18 +652,14 @@ function drawNode(id, isActive) {
 
   ctx.save();
   ctx.globalAlpha = prog;
-
-  // Scale from 0.35 → 1 as prog goes 0 → 1 (origin = planet center)
   const sc = 0.35 + 0.65 * prog;
   ctx.translate(p.x, p.y);
   ctx.scale(sc, sc);
   ctx.translate(-p.x, -p.y);
 
-  // Soft build-up glow on arrival
   if (BUILDUP.active && prog < 0.98) {
-    const glowAmt = (1 - prog) * 18;
     ctx.shadowColor = accent;
-    ctx.shadowBlur = glowAmt;
+    ctx.shadowBlur = (1 - prog) * 18;
   }
 
   // Accept double ring
@@ -704,7 +671,7 @@ function drawNode(id, isActive) {
     ctx.stroke();
   }
 
-  // Pulse ring on state entry (traversal)
+  // Pulse ring on state entry
   if (isActive && pulseT > 0) {
     const pR = NODE_R + pulseT * 18;
     const pA = Math.floor((1 - pulseT) * 200);
@@ -726,7 +693,6 @@ function drawNode(id, isActive) {
     p.y,
     NODE_R,
   );
-
   if (isActive) {
     if (s.isTrap) {
       grad.addColorStop(0, "rgba(201,95,63,0.35)");
@@ -763,27 +729,28 @@ function drawNode(id, isActive) {
   ctx.strokeStyle = isActive
     ? accent
     : s.isTrap
-      ? "rgba(201,95,63,0.55)"
+      ? "rgba(201,95,63,0.9)"
       : s.isAccept
-        ? "rgba(46,125,120,0.55)"
-        : "#d8d0c4";
-  ctx.lineWidth = isActive ? 2 : 1.2;
+        ? "rgba(46,125,120,0.9)"
+        : "#8a8278";
+  ctx.lineWidth = isActive ? 3.5 : 2.8;
   ctx.stroke();
 
   // Label
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = `500 11px "DM Sans", sans-serif`;
+  ctx.font = `700 15px "DM Sans", sans-serif`;
   ctx.fillStyle = isActive
     ? accent
     : s.isTrap
       ? "#c95f3f"
       : s.isAccept
         ? "#2e7d78"
-        : "#6b6258";
-  ctx.fillText(s.label, p.x, p.y);
+        : "#4a4540";
+  const showLabel = s.isStart || s.isTrap || s.isAccept;
+  if (showLabel) ctx.fillText(s.label, p.x, p.y);
 
-  // State name below
+  // State name below node
   ctx.font = `300 7.5px "DM Mono", monospace`;
   ctx.fillStyle = "#a09588";
   const lbl = id.startsWith("final") ? "final" : id;
@@ -825,7 +792,6 @@ function initStars(cw, ch) {
     });
   }
 }
-
 function drawStars() {
   for (const s of stars) {
     ctx.beginPath();
@@ -840,34 +806,26 @@ function drawStars() {
 // ═══════════════════════════════════════════════
 function render() {
   const { scale, offX, offY, cw, ch } = getViewport();
-
   ctx.clearRect(0, 0, cw, ch);
   ctx.fillStyle = "#f5f0e8";
   ctx.fillRect(0, 0, cw, ch);
-
-  // Stars (in screen space — not scaled)
   drawStars();
-
   ctx.save();
   ctx.translate(offX, offY);
   ctx.scale(scale, scale);
 
-  // All edges
   for (const e of getAllEdges()) {
     const isActive =
       activeEdge && activeEdge.from === e.from && activeEdge.to === e.to;
     drawEdge(e, isActive);
   }
 
-  // Start arrow
   drawStartArrow();
 
-  // Nodes (planets)
   for (const id of Object.keys(DFA.states)) {
     drawNode(id, id === activeState);
   }
 
-  // Spaceship trail + body (drawn last, on top)
   if (activeEdge && shipPos) {
     drawTrail();
     drawShipBody(shipPos.x, shipPos.y, shipPos.angle);
@@ -882,15 +840,10 @@ function render() {
 function animLoop(ts) {
   const dt = Math.min((ts - lastTime) / 1000, 0.05);
   lastTime = ts;
-
-  // Build-up animation (page load / tab switch)
   if (BUILDUP.active) tickBuildup(performance.now());
-
   if (activeEdge) particleT += dt * 1.3;
   if (pulseT > 0) pulseT = Math.max(0, pulseT - dt * 1.9);
-
-  updateShipPos(); // keep ship & trail in sync every frame
-
+  updateShipPos();
   render();
   animRaf = requestAnimationFrame(animLoop);
 }
@@ -930,7 +883,6 @@ function addLog(msg, cls = "") {
   if (!cls) el.classList.add("current");
   list.scrollTop = list.scrollHeight;
 }
-
 function clearLog() {
   document.getElementById("logList").innerHTML = "";
 }
@@ -945,7 +897,6 @@ function updateStatus(stateId, symbol, step, total) {
   const s = DFA.states[stateId] || {};
   if (s.isTrap) sv.classList.add("coral");
   else if (s.isAccept) sv.classList.add("teal");
-
   document.getElementById("infoSymbol").textContent = symbol;
   document.getElementById("infoStep").textContent = `${step} / ${total}`;
   const pct = total > 0 ? (step / total) * 100 : 0;
@@ -1003,7 +954,6 @@ function finalize() {
   activeEdge = null;
   shipTrail = [];
   shipPos = null;
-
   const banner = document.getElementById("resultBanner");
   if (acc) {
     banner.className = "accepted";
@@ -1023,7 +973,6 @@ function getSpeed() {
   const v = parseInt(document.getElementById("speedSlider").value);
   return [1400, 950, 600, 320, 120][v - 1];
 }
-
 function stopPlay() {
   isPlaying = false;
   clearTimeout(playTimer);
@@ -1031,7 +980,6 @@ function stopPlay() {
   pb.textContent = "▶ Play";
   pb.classList.remove("playing");
 }
-
 function startPlay() {
   isPlaying = true;
   const pb = document.getElementById("playBtn");
@@ -1039,7 +987,6 @@ function startPlay() {
   pb.classList.add("playing");
   tick();
 }
-
 function tick() {
   if (!isPlaying) return;
   if (currentStep >= executionSteps.length - 1) {
@@ -1054,7 +1001,6 @@ function tick() {
   updateBtns();
   playTimer = setTimeout(tick, getSpeed());
 }
-
 function stepForward() {
   if (currentStep >= executionSteps.length) return;
   if (currentStep === executionSteps.length - 1) {
@@ -1067,7 +1013,6 @@ function stepForward() {
   applyStep(currentStep);
   updateBtns();
 }
-
 function resetAll() {
   stopPlay();
   currentStep = -1;
@@ -1078,7 +1023,6 @@ function resetAll() {
   applyReset();
   updateBtns();
 }
-
 function loadInput() {
   const raw = document.getElementById("inputString").value.trim();
   const validChars = DFA.alphabet.join("");
@@ -1097,7 +1041,6 @@ function loadInput() {
   );
   applyReset();
 }
-
 function updateBtns() {
   const done = currentStep >= executionSteps.length;
   document.getElementById("stepBtn").disabled = done;
@@ -1107,8 +1050,30 @@ function updateBtns() {
 // ═══════════════════════════════════════════════
 // ⑳ TAB SWITCHING
 // ═══════════════════════════════════════════════
+
+// Sub-tab switching (DFA / CFG / PDA panels)
+function switchSubTab(subId) {
+  ["dfa", "cfg", "pda"].forEach((id) => {
+    const btn = document.getElementById("sub-" + id);
+    if (btn) btn.classList.toggle("active", id === subId);
+  });
+
+  // DFA panel: use display style (it's a .app div, not a placeholder)
+  const dfaPanel = document.getElementById("panel-dfa");
+  if (dfaPanel) dfaPanel.style.display = subId === "dfa" ? "" : "none";
+
+  // Placeholder panels: toggle .active class
+  ["cfg", "pda"].forEach((id) => {
+    const panel = document.getElementById("panel-" + id);
+    if (panel) panel.classList.toggle("active", id === subId);
+  });
+}
+
+// Main alphabet tab switching (ab / 01)
 function switchTab(tabId) {
+  // Always return to DFA sub-tab when switching alphabet tabs
   switchSubTab("dfa");
+
   DFA = tabId === "01" ? DFA_01 : DFA_AB;
 
   // Update tab button styles
@@ -1124,7 +1089,7 @@ function switchTab(tabId) {
   inp.placeholder = DFA.placeholder;
   inp.value = DFA.defaultInput;
 
-  // Re-init stars to match new canvas size
+  // Re-init stars
   const { cw, ch } = getViewport();
   initStars(cw, ch);
 
@@ -1135,29 +1100,8 @@ function switchTab(tabId) {
   addLog(`Switched to Σ = {${DFA.alphabet.join(",")}} — Loaded: "${inputStr}"`);
   applyReset();
 
-  // Kick off the DFA build-up animation for this tab's graph
+  // Kick off the build-up animation
   startBuildup();
-}
-
-function switchSubTab(subId) {
-  // Update sub-tab button states
-  ["dfa", "cfg", "pda"].forEach((id) => {
-    document
-      .getElementById("sub-" + id)
-      .classList.toggle("active", id === subId);
-  });
-
-  // DFA panel: toggle visibility (it's a .app div, not .placeholder-panel)
-  const dfaPanel = document.getElementById("panel-dfa");
-  dfaPanel.style.display = subId === "dfa" ? "" : "none";
-
-  // Placeholder panels: add/remove .active class
-  document
-    .getElementById("panel-cfg")
-    .classList.toggle("active", subId === "cfg");
-  document
-    .getElementById("panel-pda")
-    .classList.toggle("active", subId === "pda");
 }
 
 // ═══════════════════════════════════════════════
@@ -1180,8 +1124,15 @@ document.getElementById("speedSlider").addEventListener("input", function () {
   document.getElementById("speedVal").textContent = this.value + "×";
 });
 
+// Alphabet tab buttons
 document.querySelectorAll(".tab-btn").forEach((btn) => {
   btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+});
+
+// Sub-tab buttons (DFA / CFG / PDA) — only wire up if present in the DOM
+["dfa", "cfg", "pda"].forEach((id) => {
+  const btn = document.getElementById("sub-" + id);
+  if (btn) btn.addEventListener("click", () => switchSubTab(id));
 });
 
 window.addEventListener("resize", () => {
@@ -1200,7 +1151,6 @@ window.addEventListener("resize", () => {
 // ═══════════════════════════════════════════════
 setTimeout(() => {
   resizeCanvas();
-
   const { cw, ch } = getViewport();
   initStars(cw, ch);
 
@@ -1217,7 +1167,7 @@ setTimeout(() => {
   // Start animation loop, then kick off build-up
   requestAnimationFrame((ts) => {
     lastTime = ts;
-    startBuildup(); // play the DFA assembly sequence on page load
+    startBuildup();
     animLoop(ts);
   });
 }, 80);
