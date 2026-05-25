@@ -71,7 +71,6 @@ header {
   flex-shrink: 0;
 }
 
-/* Mini planet icon in header */
 .h-planet-icon {
   width: 22px;
   height: 22px;
@@ -174,6 +173,7 @@ header {
   gap: 11px;
   min-height: 0;
   overflow: hidden;
+  position: relative;
 }
 
 #dfaCanvas {
@@ -631,14 +631,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 /* ════════════════════════════════════════
-   SPACESHIP CANVAS OVERLAY
-   The spaceship is drawn ON the main canvas
-   but we style the container for the stars
+   SUB-TAB BAR
 ════════════════════════════════════════ */
-.canvas-wrap {
-  position: relative;
-}
-/* ── Sub-tab bar ─────────────────────────────────────────── */
 .sub-tab-bar {
   display: flex;
   gap: 0;
@@ -665,59 +659,332 @@ input[type="range"]::-webkit-slider-thumb:hover {
     color 0.15s,
     border-color 0.15s;
 }
-
 .sub-tab:hover {
   color: var(--teal);
 }
-
 .sub-tab.active {
   color: var(--teal);
   border-bottom-color: var(--teal);
 }
 
-/* ── Placeholder panels (CFG / PDA) ─────────────────────── */
+/* ════════════════════════════════════════
+   PLACEHOLDER PANELS  (CFG / PDA wrappers)
+════════════════════════════════════════ */
 .placeholder-panel {
   display: none;
   flex: 1;
-  align-items: center;
-  justify-content: center;
   min-height: 0;
+  overflow-y: auto;
+  background: var(--paper);
 }
-
 .placeholder-panel.active {
   display: flex;
 }
 
-.ph-content {
+.placeholder-panel::-webkit-scrollbar {
+  width: 4px;
+}
+.placeholder-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+.placeholder-panel::-webkit-scrollbar-thumb {
+  background: var(--rule);
+  border-radius: 2px;
+}
+
+/* ════════════════════════════════════════
+   INFO PANEL — shared layout for CFG & PDA
+   All new classes use ip-* prefix.
+════════════════════════════════════════ */
+.ip-wrap {
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 22px 28px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ip-header {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.ip-header-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.ip-badge {
+  font-family: "DM Mono", monospace;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  background: var(--teal);
+  color: #fff;
+  padding: 3px 10px;
+  border-radius: 4px;
+}
+
+.ip-badge-label {
+  font-family: "DM Mono", monospace;
+  font-size: 0.56rem;
+  color: var(--ink4);
+  letter-spacing: 0.06em;
+}
+
+.ip-formula {
+  font-family: "DM Mono", monospace;
+  font-size: 0.74rem;
+  color: var(--ink2);
+  line-height: 1.8;
+  letter-spacing: 0.03em;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+}
+
+.ip-var {
+  display: inline-flex;
+  align-items: center;
+  background: var(--teal-lt);
+  color: var(--teal);
+  border: 1px solid rgba(46, 125, 120, 0.25);
+  border-radius: 3px;
+  padding: 1px 7px;
+  font-weight: 500;
+  font-size: 0.72rem;
+}
+.ip-var-start {
+  background: var(--teal);
+  color: #fff;
+  border-color: var(--teal);
+}
+
+.ip-meta {
+  font-family: "DM Mono", monospace;
+  font-size: 0.52rem;
+  color: var(--ink4);
+  letter-spacing: 0.07em;
+}
+
+.ip-table {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ip-trow {
+  display: grid;
+  grid-template-columns: 58px 1fr 220px;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--rule);
+  gap: 0;
+  transition: background 0.12s;
+}
+.ip-trow:last-child {
+  border-bottom: none;
+}
+.ip-trow.ip-alt {
+  background: var(--paper2);
+}
+.ip-trow:not(.ip-thead):hover {
+  background: var(--amber-lt);
+}
+
+.ip-thead {
+  background: var(--paper3);
+  border-bottom: 1px solid var(--rule);
+}
+.ip-thead span {
+  font-family: "DM Mono", monospace;
+  font-size: 0.46rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink4);
+}
+
+.ip-col-var {
+  display: flex;
+  align-items: center;
+}
+.ip-col-prod {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.ip-col-rx {
+  display: flex;
+  align-items: center;
+}
+
+.ip-chip {
+  font-family: "DM Mono", monospace;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--ink2);
+  background: var(--paper3);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 2px 9px;
+  min-width: 26px;
+  text-align: center;
+}
+.ip-chip-start {
+  background: var(--teal-lt);
+  color: var(--teal);
+  border-color: rgba(46, 125, 120, 0.3);
+}
+
+.ip-tok {
+  font-family: "DM Mono", monospace;
+  font-size: 0.68rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 2px 7px;
+}
+.ip-eps {
+  color: var(--coral);
+  border-color: var(--coral-lt);
+  background: var(--coral-lt);
+}
+
+.ip-bar {
+  font-family: "DM Mono", monospace;
+  font-size: 0.62rem;
+  color: var(--ink4);
+}
+
+.ip-rx {
+  font-family: "DM Mono", monospace;
+  font-size: 0.6rem;
+  color: var(--teal);
+  background: var(--teal-lt);
+  border: 1px solid rgba(46, 125, 120, 0.22);
+  border-radius: 4px;
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+
+.ip-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ip-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  padding: 7px 12px;
+}
+.ip-note-ok {
+  border-color: rgba(46, 125, 120, 0.3);
+  background: var(--teal-lt);
+}
+
+.ip-note-key {
+  font-family: "DM Mono", monospace;
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: var(--ink2);
+  white-space: nowrap;
+}
+.ip-note-ok .ip-note-key {
+  color: var(--teal);
+}
+
+.ip-note-val {
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.64rem;
+  color: var(--ink3);
+}
+
+/* ════════════════════════════════════════
+   PDA DIAGRAM
+════════════════════════════════════════ */
+.pda-diagram-wrap {
+  background: #1e1d1a;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 16px 12px;
+  overflow-y: auto;
+  max-height: calc(100vh - 320px);
+  min-height: 420px;
+}
+
+.pda-diagram-wrap::-webkit-scrollbar {
+  width: 4px;
+}
+.pda-diagram-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+.pda-diagram-wrap::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 2px;
+}
+
+.pda-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ════════════════════════════════════════
+   EMPTY PLACEHOLDER (fallback)
+════════════════════════════════════════ */
+.ip-empty {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+
+.ip-empty-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
   text-align: center;
-  opacity: 0.45;
+  opacity: 0.4;
 }
 
-.ph-icon {
-  width: 48px;
-  height: 48px;
+.ip-empty-icon {
+  width: 46px;
+  height: 46px;
   border: 2px dashed var(--rule);
   border-radius: 50%;
-  display: block;
 }
 
-.ph-title {
+.ip-empty-title {
   font-family: "DM Mono", monospace;
-  font-size: 0.75rem;
-  color: var(--ink2);
-  margin: 0;
+  font-size: 0.72rem;
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+  color: var(--ink2);
 }
 
-.ph-sub {
+.ip-empty-sub {
   font-family: "DM Sans", sans-serif;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: var(--ink3);
-  margin: 0;
 }

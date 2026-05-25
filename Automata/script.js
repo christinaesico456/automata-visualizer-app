@@ -56,36 +56,10 @@ const DFA_AB = {
   },
 };
 
-// ─────────────────────────────────────────────────────────────
-// {0,1} DFA — pixel-perfect match to hand-drawn diagram
-//
-//  Hand-drawn layout (4 columns):
-//
-//   col1(x=75)   col2(x=280)   col3(x=530)   col4(x=840)
-//
-//   row-top(y=90):              sA            sC
-//   row-mid(y=250):  start                    sE            final
-//   row-bot(y=410):             sB            sD
-//
-//  Arrows:
-//   start --1--> sA     (diagonal up-right)
-//   start --0--> sB     (diagonal down-right)
-//   sA    --1--> sC     (rightward top)
-//   sA    --0--> sB     (downward, bidirectional with sB→sA)
-//   sB    --1--> sA     (upward, bidirectional)
-//   sB    --0--> sD     (rightward bottom)
-//   sC    --1--> sA     (leftward top, back; bidirectional with sA→sC)
-//   sC    --0--> sE     (downward, same x)
-//   sE    --1--> final  (rightward middle)
-//   sE    --0--> sD     (downward, same x)
-//   sD    --0--> final  (diagonal up-right to final)
-//   sD    --1--> sA     (long diagonal up-left)
-//   final --0,1-> final (self-loop top)
-// ─────────────────────────────────────────────────────────────
 const DFA_01 = {
   alphabet: ["0", "1"],
   regex:
-    "<em>(|01| + (|11|)* + |00|)</em> + <em>(1+0+11)*</em>(1+0+01)* <em>(111+000+101)(1+0)*</em>",
+    "((101) + (111)* + 100) + (1+0+11)*(1+0+01)*<em>(111+000+101)</em>(1+0)*",
   placeholder: "e.g. 101",
   defaultInput: "101",
 
@@ -94,29 +68,29 @@ const DFA_01 = {
     sA: { label: "−", isStart: false, isAccept: false, isTrap: false },
     sB: { label: "−", isStart: false, isAccept: false, isTrap: false },
     sC: { label: "−", isStart: false, isAccept: false, isTrap: false },
-    sE: { label: "−", isStart: false, isAccept: false, isTrap: false },
     sD: { label: "−", isStart: false, isAccept: false, isTrap: false },
+    sE: { label: "−", isStart: false, isAccept: false, isTrap: false },
     final: { label: "+", isStart: false, isAccept: true, isTrap: false },
   },
 
   transitions: {
-    start: { 0: "sB", 1: "sA" },
-    sA: { 0: "sB", 1: "sC" },
-    sB: { 0: "sD", 1: "sA" },
-    sC: { 0: "sE", 1: "sA" },
+    start: { 0: "sA", 1: "sB" },
+    sA: { 0: "sC", 1: "sB" },
+    sB: { 0: "sD", 1: "sE" },
+    sC: { 0: "final", 1: "sB" },
+    sD: { 0: "final", 1: "final" },
     sE: { 0: "sD", 1: "final" },
-    sD: { 0: "final", 1: "sA" },
     final: { 0: "final", 1: "final" },
   },
 
   positions: {
-    start: { x: 75, y: 250 },
-    sA: { x: 280, y: 90 },
-    sB: { x: 280, y: 410 },
-    sC: { x: 530, y: 90 },
-    sE: { x: 530, y: 250 },
-    sD: { x: 530, y: 410 },
-    final: { x: 840, y: 250 },
+    start: { x: 80, y: 270 },
+    sA: { x: 290, y: 100 },
+    sB: { x: 290, y: 270 },
+    sC: { x: 530, y: 100 },
+    sD: { x: 530, y: 270 },
+    sE: { x: 530, y: 430 },
+    final: { x: 820, y: 270 },
   },
 };
 
@@ -126,28 +100,27 @@ const DFA_01 = {
 const canvas = document.getElementById("dfaCanvas");
 const ctx = canvas.getContext("2d");
 
-// Logical canvas dimensions (we scale to fit)
 const W = 940,
   H = 520;
 
-// Active DFA config
 let DFA = DFA_AB;
-const NODE_R = 34; // node radius (logical)
+const NODE_R = 34;
 
-// Execution state
 let inputStr = "";
 let currentStep = -1;
 let executionSteps = [];
 let isPlaying = false;
 let playTimer = null;
 let activeState = "start";
-let activeEdge = null; // { from, to }
+let activeEdge = null;
 
-// Animation timers
-let particleT = 0; // 0→1 along current edge
-let pulseT = 0; // 0→1 for node pulse ring
+let particleT = 0;
+let pulseT = 0;
 let animRaf = null;
 let lastTime = 0;
+
+// track which main alphabet tab is active
+let activeTabId = "ab";
 
 // ═══════════════════════════════════════════════
 // BUILD-UP ANIMATION SYSTEM
@@ -179,8 +152,7 @@ function startBuildup() {
   BUILDUP.edgeProgress = {};
   BUILDUP.edgeStart = {};
 
-  const stateIds = Object.keys(DFA.states);
-  const sorted = [...stateIds].sort(
+  const sorted = [...Object.keys(DFA.states)].sort(
     (a, b) => DFA.positions[a].x - DFA.positions[b].x,
   );
   sorted.forEach((id, i) => {
@@ -188,8 +160,7 @@ function startBuildup() {
     BUILDUP.nodeProgress[id] = 0;
   });
 
-  const edges = getAllEdges();
-  edges.forEach((e, i) => {
+  getAllEdges().forEach((e, i) => {
     const key = `${e.from}→${e.to}`;
     BUILDUP.edgeStart[key] =
       now + BUILDUP.EDGE_DELAY + i * BUILDUP.EDGE_STAGGER;
@@ -201,15 +172,19 @@ function tickBuildup(now) {
   if (!BUILDUP.active) return;
   let allDone = true;
   for (const id of Object.keys(DFA.states)) {
-    const elapsed = now - BUILDUP.nodeStart[id];
-    const raw = Math.min(Math.max(elapsed / BUILDUP.NODE_DURATION, 0), 1);
+    const raw = Math.min(
+      Math.max((now - BUILDUP.nodeStart[id]) / BUILDUP.NODE_DURATION, 0),
+      1,
+    );
     BUILDUP.nodeProgress[id] = easeInOut(raw);
     if (raw < 1) allDone = false;
   }
   for (const e of getAllEdges()) {
     const key = `${e.from}→${e.to}`;
-    const elapsed = now - BUILDUP.edgeStart[key];
-    const raw = Math.min(Math.max(elapsed / BUILDUP.EDGE_DURATION, 0), 1);
+    const raw = Math.min(
+      Math.max((now - BUILDUP.edgeStart[key]) / BUILDUP.EDGE_DURATION, 0),
+      1,
+    );
     BUILDUP.edgeProgress[key] = easeInOut(raw);
     if (raw < 1) allDone = false;
   }
@@ -221,12 +196,10 @@ function nodeAlpha(id) {
     return 1;
   return BUILDUP.nodeProgress[id] ?? 1;
 }
-
 function edgeProg(from, to) {
   if (!BUILDUP.active && Object.keys(BUILDUP.edgeProgress).length === 0)
     return 1;
-  const key = `${from}→${to}`;
-  return BUILDUP.edgeProgress[key] ?? 1;
+  return BUILDUP.edgeProgress[`${from}→${to}`] ?? 1;
 }
 
 // ═══════════════════════════════════════════════
@@ -236,9 +209,7 @@ function resizeCanvas() {
   const wrap = canvas.parentElement;
   const dpr = window.devicePixelRatio || 1;
   const rect = wrap.getBoundingClientRect();
-  const tapeH = 56;
-  const gap = 11;
-  const h = rect.height - tapeH - gap;
+  const h = rect.height - 56 - 11;
   canvas.width = rect.width * dpr;
   canvas.height = h * dpr;
   canvas.style.width = rect.width + "px";
@@ -283,20 +254,15 @@ function bezierTangent(sx, sy, cpx, cpy, ex, ey, t) {
   );
 }
 
-// For a given edge, return its curve control point.
-// Uses the improved bidirectional bow from doc 2.
 function getEdgeCurve(from, to) {
-  if (from === to) return null; // self-loop handled separately
-
+  if (from === to) return null;
   const pFrom = DFA.positions[from];
   const pTo = DFA.positions[to];
   const hasReverse =
     DFA.transitions[to] && Object.values(DFA.transitions[to]).includes(from);
-
   const angle = Math.atan2(pTo.y - pFrom.y, pTo.x - pFrom.x);
 
   if (!hasReverse) {
-    // Straight (slightly curved) edge
     return {
       sx: pFrom.x + NODE_R * Math.cos(angle),
       sy: pFrom.y + NODE_R * Math.sin(angle),
@@ -307,28 +273,18 @@ function getEdgeCurve(from, to) {
     };
   }
 
-  // Bidirectional pair: bow each arrow outward in opposite perpendicular directions
-  const CURVE_BOW = 42;
-  const EDGE_OFF = 16;
+  const CURVE_BOW = 42,
+    EDGE_OFF = 16;
   const perp = angle + Math.PI / 2;
   const nx = Math.cos(perp),
     ny = Math.sin(perp);
-
   const sx = pFrom.x + NODE_R * Math.cos(angle) + EDGE_OFF * nx;
   const sy = pFrom.y + NODE_R * Math.sin(angle) + EDGE_OFF * ny;
   const ex = pTo.x - NODE_R * Math.cos(angle) + EDGE_OFF * nx;
   const ey = pTo.y - NODE_R * Math.sin(angle) + EDGE_OFF * ny;
-  const mx = (sx + ex) / 2;
-  const my = (sy + ey) / 2;
-
-  return {
-    sx,
-    sy,
-    cpx: mx + nx * CURVE_BOW,
-    cpy: my + ny * CURVE_BOW,
-    ex,
-    ey,
-  };
+  const mx = (sx + ex) / 2,
+    my = (sy + ey) / 2;
+  return { sx, sy, cpx: mx + nx * CURVE_BOW, cpy: my + ny * CURVE_BOW, ex, ey };
 }
 
 // ═══════════════════════════════════════════════
@@ -417,7 +373,6 @@ function drawShipBody(x, y, angle) {
   ctx.rotate(angle);
   const S = 9;
 
-  // Engine exhaust glow
   const exG = ctx.createRadialGradient(-S * 0.8, 0, 0, -S * 0.8, 0, S);
   exG.addColorStop(0, "rgba(255,200,60,0.95)");
   exG.addColorStop(0.45, "rgba(224,107,69,0.6)");
@@ -431,7 +386,6 @@ function drawShipBody(x, y, angle) {
   ctx.fill();
   ctx.restore();
 
-  // Hull
   ctx.save();
   ctx.shadowColor = "#e06b45";
   ctx.shadowBlur = 14;
@@ -454,7 +408,6 @@ function drawShipBody(x, y, angle) {
   ctx.stroke();
   ctx.restore();
 
-  // Cockpit window
   ctx.save();
   ctx.shadowColor = "#3ab8a8";
   ctx.shadowBlur = 8;
@@ -530,8 +483,7 @@ function drawEdge(e, isActive) {
     const loopR = 23;
     const loopCY = p.y - NODE_R - 28;
     const startA = Math.PI + 0.42;
-    const fullSpan = 2 * Math.PI - 0.84;
-    const endDraw = startA + fullSpan * prog;
+    const endDraw = startA + (2 * Math.PI - 0.84) * prog;
 
     if (buildGlow) {
       ctx.shadowColor = edgeColor;
@@ -543,16 +495,20 @@ function drawEdge(e, isActive) {
     ctx.shadowBlur = 0;
 
     if (prog > 0.88) {
-      const arrowAlpha = (prog - 0.88) / 0.12;
-      ctx.globalAlpha = Math.min(arrowAlpha, 1) * Math.min(prog * 2, 1);
+      ctx.globalAlpha =
+        Math.min((prog - 0.88) / 0.12, 1) * Math.min(prog * 2, 1);
       const arcEX = p.x + loopR * Math.cos(Math.PI - 0.42);
       const arcEY = loopCY + loopR * Math.sin(Math.PI - 0.42);
-      const arrowAngle = Math.atan2(p.y - arcEY, p.x - arcEX);
-      const arrowX = p.x + NODE_R * Math.cos(arrowAngle - Math.PI);
-      const arrowY = p.y + NODE_R * Math.sin(arrowAngle - Math.PI);
-      drawArrow(arrowX, arrowY, arrowAngle, edgeColor, 7);
+      const aAng = Math.atan2(p.y - arcEY, p.x - arcEX);
+      drawArrow(
+        p.x + NODE_R * Math.cos(aAng - Math.PI),
+        p.y + NODE_R * Math.sin(aAng - Math.PI),
+        aAng,
+        edgeColor,
+        7,
+      );
 
-      ctx.font = '400 10px "DM Mono", monospace';
+      ctx.font = '400 10px "DM Mono",monospace';
       const tw = ctx.measureText(label).width;
       ctx.fillStyle = isActive
         ? "rgba(201,95,63,0.1)"
@@ -565,7 +521,6 @@ function drawEdge(e, isActive) {
       ctx.textBaseline = "bottom";
       ctx.fillText(label, p.x, loopCY - loopR - 1);
     }
-
     ctx.restore();
     return;
   }
@@ -583,17 +538,14 @@ function drawEdge(e, isActive) {
   ctx.beginPath();
   ctx.moveTo(sx, sy);
   for (let i = 1; i <= drawSteps; i++) {
-    const t = i / STEPS;
-    const pt = bezierPt(sx, sy, cpx, cpy, ex, ey, t);
+    const pt = bezierPt(sx, sy, cpx, cpy, ex, ey, i / STEPS);
     ctx.lineTo(pt.x, pt.y);
   }
   ctx.stroke();
   ctx.shadowBlur = 0;
 
-  // Soft leading dot at the drawing frontier (only during build-up)
   if (buildGlow && drawSteps < STEPS) {
-    const frontT = drawSteps / STEPS;
-    const frontPt = bezierPt(sx, sy, cpx, cpy, ex, ey, frontT);
+    const frontPt = bezierPt(sx, sy, cpx, cpy, ex, ey, drawSteps / STEPS);
     ctx.save();
     ctx.globalAlpha = 0.9;
     ctx.beginPath();
@@ -605,20 +557,20 @@ function drawEdge(e, isActive) {
     ctx.restore();
   }
 
-  // Arrow & label — appear only when edge is nearly fully drawn
   if (prog > 0.88) {
-    const revealA = (prog - 0.88) / 0.12;
-    ctx.globalAlpha = Math.min(revealA, 1) * Math.min(prog * 2, 1);
-
-    const arrowDir = bezierTangent(sx, sy, cpx, cpy, ex, ey, 0.999);
-    drawArrow(ex, ey, arrowDir, edgeColor);
+    ctx.globalAlpha = Math.min((prog - 0.88) / 0.12, 1) * Math.min(prog * 2, 1);
+    drawArrow(
+      ex,
+      ey,
+      bezierTangent(sx, sy, cpx, cpy, ex, ey, 0.999),
+      edgeColor,
+    );
 
     const lpt = bezierPt(sx, sy, cpx, cpy, ex, ey, 0.5);
     const tang = bezierTangent(sx, sy, cpx, cpy, ex, ey, 0.5);
     const lx = lpt.x + -Math.sin(tang) * 13;
     const ly = lpt.y + Math.cos(tang) * 13;
-
-    ctx.font = '400 10px "DM Mono", monospace';
+    ctx.font = '400 10px "DM Mono",monospace';
     const tw2 = ctx.measureText(label).width;
     ctx.fillStyle = isActive ? "rgba(201,95,63,0.1)" : "rgba(245,240,232,0.92)";
     ctx.beginPath();
@@ -629,7 +581,6 @@ function drawEdge(e, isActive) {
     ctx.textBaseline = "middle";
     ctx.fillText(label, lx, ly);
   }
-
   ctx.restore();
 }
 
@@ -662,7 +613,6 @@ function drawNode(id, isActive) {
     ctx.shadowBlur = (1 - prog) * 18;
   }
 
-  // Accept double ring
   if (s.isAccept) {
     ctx.beginPath();
     ctx.arc(p.x, p.y, NODE_R + 7, 0, 2 * Math.PI);
@@ -671,12 +621,10 @@ function drawNode(id, isActive) {
     ctx.stroke();
   }
 
-  // Pulse ring on state entry
   if (isActive && pulseT > 0) {
-    const pR = NODE_R + pulseT * 18;
     const pA = Math.floor((1 - pulseT) * 200);
     ctx.beginPath();
-    ctx.arc(p.x, p.y, pR, 0, 2 * Math.PI);
+    ctx.arc(p.x, p.y, NODE_R + pulseT * 18, 0, 2 * Math.PI);
     ctx.strokeStyle = accent + pA.toString(16).padStart(2, "0");
     ctx.lineWidth = 1.5;
     ctx.stroke();
@@ -684,7 +632,6 @@ function drawNode(id, isActive) {
 
   ctx.shadowBlur = 0;
 
-  // Planet body — radial gradient for 3D feel
   const grad = ctx.createRadialGradient(
     p.x - NODE_R * 0.3,
     p.y - NODE_R * 0.3,
@@ -708,13 +655,11 @@ function drawNode(id, isActive) {
     grad.addColorStop(0, "#f5f0e8");
     grad.addColorStop(1, "#e4ddd0");
   }
-
   ctx.beginPath();
   ctx.arc(p.x, p.y, NODE_R, 0, 2 * Math.PI);
   ctx.fillStyle = grad;
   ctx.fill();
 
-  // Planet equatorial ring
   ctx.save();
   ctx.beginPath();
   ctx.ellipse(p.x, p.y, NODE_R + 10, 5, 0, Math.PI * 0.15, Math.PI * 0.85);
@@ -723,7 +668,6 @@ function drawNode(id, isActive) {
   ctx.stroke();
   ctx.restore();
 
-  // Border stroke
   ctx.beginPath();
   ctx.arc(p.x, p.y, NODE_R, 0, 2 * Math.PI);
   ctx.strokeStyle = isActive
@@ -736,10 +680,9 @@ function drawNode(id, isActive) {
   ctx.lineWidth = isActive ? 3.5 : 2.8;
   ctx.stroke();
 
-  // Label
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = `700 15px "DM Sans", sans-serif`;
+  ctx.font = '700 15px "DM Sans",sans-serif';
   ctx.fillStyle = isActive
     ? accent
     : s.isTrap
@@ -747,14 +690,11 @@ function drawNode(id, isActive) {
       : s.isAccept
         ? "#2e7d78"
         : "#4a4540";
-  const showLabel = s.isStart || s.isTrap || s.isAccept;
-  if (showLabel) ctx.fillText(s.label, p.x, p.y);
+  if (s.isStart || s.isTrap || s.isAccept) ctx.fillText(s.label, p.x, p.y);
 
-  // State name below node
-  ctx.font = `300 7.5px "DM Mono", monospace`;
+  ctx.font = '300 7.5px "DM Mono",monospace';
   ctx.fillStyle = "#a09588";
-  const lbl = id.startsWith("final") ? "final" : id;
-  ctx.fillText(lbl, p.x, p.y + NODE_R + 11);
+  ctx.fillText(id.startsWith("final") ? "final" : id, p.x, p.y + NODE_R + 11);
 
   ctx.restore();
 }
@@ -778,7 +718,7 @@ function drawStartArrow() {
 }
 
 // ═══════════════════════════════════════════════
-// ⑪ DRAW STARS (background)
+// ⑪ DRAW STARS
 // ═══════════════════════════════════════════════
 let stars = [];
 function initStars(cw, ch) {
@@ -815,17 +755,13 @@ function render() {
   ctx.scale(scale, scale);
 
   for (const e of getAllEdges()) {
-    const isActive =
-      activeEdge && activeEdge.from === e.from && activeEdge.to === e.to;
-    drawEdge(e, isActive);
+    drawEdge(
+      e,
+      activeEdge && activeEdge.from === e.from && activeEdge.to === e.to,
+    );
   }
-
   drawStartArrow();
-
-  for (const id of Object.keys(DFA.states)) {
-    drawNode(id, id === activeState);
-  }
-
+  for (const id of Object.keys(DFA.states)) drawNode(id, id === activeState);
   if (activeEdge && shipPos) {
     drawTrail();
     drawShipBody(shipPos.x, shipPos.y, shipPos.angle);
@@ -896,11 +832,11 @@ function updateStatus(stateId, symbol, step, total) {
   sv.className = "stat-value";
   const s = DFA.states[stateId] || {};
   if (s.isTrap) sv.classList.add("coral");
-  else if (s.isAccept) sv.classList.add("teal");
+  if (s.isAccept) sv.classList.add("teal");
   document.getElementById("infoSymbol").textContent = symbol;
   document.getElementById("infoStep").textContent = `${step} / ${total}`;
-  const pct = total > 0 ? (step / total) * 100 : 0;
-  document.getElementById("stepBar").style.width = pct + "%";
+  document.getElementById("stepBar").style.width =
+    (total > 0 ? (step / total) * 100 : 0) + "%";
 }
 
 // ═══════════════════════════════════════════════
@@ -970,8 +906,9 @@ function finalize() {
 // ⑲ CONTROLS
 // ═══════════════════════════════════════════════
 function getSpeed() {
-  const v = parseInt(document.getElementById("speedSlider").value);
-  return [1400, 950, 600, 320, 120][v - 1];
+  return [1400, 950, 600, 320, 120][
+    parseInt(document.getElementById("speedSlider").value) - 1
+  ];
 }
 function stopPlay() {
   isPlaying = false;
@@ -1025,8 +962,7 @@ function resetAll() {
 }
 function loadInput() {
   const raw = document.getElementById("inputString").value.trim();
-  const validChars = DFA.alphabet.join("");
-  const re = new RegExp(`^[${validChars}]*$`);
+  const re = new RegExp(`^[${DFA.alphabet.join("")}]*$`);
   if (!re.test(raw)) {
     alert(
       `Please enter a string containing only: ${DFA.alphabet.map((c) => `"${c}"`).join(", ")}`,
@@ -1048,64 +984,80 @@ function updateBtns() {
 }
 
 // ═══════════════════════════════════════════════
-// ⑳ TAB SWITCHING
+// ⑳  SUB-PANEL VISIBILITY HELPER
+//
+//  Shows the correct ab/01 inner panel inside
+//  panel-cfg and panel-pda based on activeTabId.
+//  Called whenever the sub-tab OR the main tab changes.
+// ═══════════════════════════════════════════════
+function updateInfoPanels() {
+  const isAb = activeTabId === "ab";
+
+  const cfgAb = document.getElementById("cfg-ab");
+  const cfg01 = document.getElementById("cfg-01");
+  if (cfgAb) cfgAb.style.display = isAb ? "" : "none";
+  if (cfg01) cfg01.style.display = isAb ? "none" : "";
+
+  const pdaAb = document.getElementById("pda-ab");
+  const pda01 = document.getElementById("pda-01");
+  if (pdaAb) pdaAb.style.display = isAb ? "" : "none";
+  if (pda01) pda01.style.display = isAb ? "none" : "";
+}
+
+// ═══════════════════════════════════════════════
+// ㉑ TAB SWITCHING
 // ═══════════════════════════════════════════════
 
-// Sub-tab switching (DFA / CFG / PDA panels)
 function switchSubTab(subId) {
   ["dfa", "cfg", "pda"].forEach((id) => {
     const btn = document.getElementById("sub-" + id);
     if (btn) btn.classList.toggle("active", id === subId);
   });
 
-  // DFA panel: use display style (it's a .app div, not a placeholder)
   const dfaPanel = document.getElementById("panel-dfa");
   if (dfaPanel) dfaPanel.style.display = subId === "dfa" ? "" : "none";
 
-  // Placeholder panels: toggle .active class
   ["cfg", "pda"].forEach((id) => {
     const panel = document.getElementById("panel-" + id);
     if (panel) panel.classList.toggle("active", id === subId);
   });
+
+  // Make sure the correct inner content is visible
+  updateInfoPanels();
 }
 
-// Main alphabet tab switching (ab / 01)
 function switchTab(tabId) {
-  // Always return to DFA sub-tab when switching alphabet tabs
-  switchSubTab("dfa");
+  activeTabId = tabId;
+  switchSubTab("dfa"); // always land on DFA sub-tab first
 
   DFA = tabId === "01" ? DFA_01 : DFA_AB;
 
-  // Update tab button styles
   document.querySelectorAll(".tab-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.tab === tabId);
   });
 
-  // Update header regex
   document.getElementById("headerRegex").innerHTML = DFA.regex;
 
-  // Update input placeholder & default
   const inp = document.getElementById("inputString");
   inp.placeholder = DFA.placeholder;
   inp.value = DFA.defaultInput;
 
-  // Re-init stars
   const { cw, ch } = getViewport();
   initStars(cw, ch);
 
-  // Reset and load default
   inputStr = DFA.defaultInput;
   executionSteps = buildTrace(inputStr);
   resetAll();
   addLog(`Switched to Σ = {${DFA.alphabet.join(",")}} — Loaded: "${inputStr}"`);
   applyReset();
-
-  // Kick off the build-up animation
   startBuildup();
+
+  // Sync inner info panels for new tab
+  updateInfoPanels();
 }
 
 // ═══════════════════════════════════════════════
-// ㉑ EVENT LISTENERS
+// ㉒ EVENT LISTENERS
 // ═══════════════════════════════════════════════
 document.getElementById("playBtn").addEventListener("click", () => {
   if (isPlaying) stopPlay();
@@ -1124,12 +1076,10 @@ document.getElementById("speedSlider").addEventListener("input", function () {
   document.getElementById("speedVal").textContent = this.value + "×";
 });
 
-// Alphabet tab buttons
 document.querySelectorAll(".tab-btn").forEach((btn) => {
   btn.addEventListener("click", () => switchTab(btn.dataset.tab));
 });
 
-// Sub-tab buttons (DFA / CFG / PDA) — only wire up if present in the DOM
 ["dfa", "cfg", "pda"].forEach((id) => {
   const btn = document.getElementById("sub-" + id);
   if (btn) btn.addEventListener("click", () => switchSubTab(id));
@@ -1147,24 +1097,24 @@ window.addEventListener("resize", () => {
 });
 
 // ═══════════════════════════════════════════════
-// ㉒ INIT
+// ㉓ INIT
 // ═══════════════════════════════════════════════
 setTimeout(() => {
   resizeCanvas();
   const { cw, ch } = getViewport();
   initStars(cw, ch);
 
-  // Set header regex for default tab
   document.getElementById("headerRegex").innerHTML = DFA_AB.regex;
 
-  // Load default input
   inputStr = DFA_AB.defaultInput;
   executionSteps = buildTrace(inputStr);
   applyReset();
   addLog(`Loaded: "${inputStr}" (${inputStr.length} symbols)`);
   updateBtns();
 
-  // Start animation loop, then kick off build-up
+  // Set initial inner-panel visibility (ab is default)
+  updateInfoPanels();
+
   requestAnimationFrame((ts) => {
     lastTime = ts;
     startBuildup();
