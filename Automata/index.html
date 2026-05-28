@@ -3,348 +3,377 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DFA Visualizer</title>
+    <title>Automata Visualizer</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <!-- ── HEADER ── -->
-    <header>
-      <div class="h-brand">
-        <div class="h-planet-icon"><div class="planet-ring"></div></div>
-        <span class="h-title">DFA Visualizer</span>
-      </div>
-      <nav class="tab-nav">
-        <button class="tab-btn active" data-tab="ab">Σ = {a, b}</button>
-        <button class="tab-btn" data-tab="01">Σ = {0, 1}</button>
-      </nav>
-      <div class="h-regex" id="headerRegex"></div>
-    </header>
-
-    <!-- ── SUB-TAB BAR ── -->
-    <div class="sub-tab-bar">
-      <button class="sub-tab active" id="sub-dfa" onclick="switchSubTab('dfa')">DFA</button>
-      <button class="sub-tab" id="sub-cfg" onclick="switchSubTab('cfg')">CFG</button>
-      <button class="sub-tab" id="sub-pda" onclick="switchSubTab('pda')">PDA</button>
-    </div>
 
     <!-- ══════════════════════════════════════
-         PANEL: DFA  (untouched)
+         LANDING PAGE
     ══════════════════════════════════════ -->
-    <div class="app" id="panel-dfa">
-      <div class="canvas-wrap">
-        <canvas id="dfaCanvas"></canvas>
-        <div class="tape-row">
-          <div class="tape-label">Tape</div>
-          <div class="tape-cells" id="tape"></div>
-          <div class="tape-pointer" id="tapePointer">pos <span>—</span></div>
-        </div>
-      </div>
-      <div class="side">
-        <div class="side-block">
-          <div class="block-title">Input String</div>
-          <div class="input-group">
-            <input id="inputString" type="text" placeholder="e.g. aab" value="aab"
-              maxlength="40" spellcheck="false" autocomplete="off" />
-            <button id="loadBtn">Load</button>
+    <div id="landing-page">
+      <div class="landing-bg-grid"></div>
+      <div class="landing-content">
+        <div class="landing-icon">
+          <div class="landing-planet">
+            <div class="landing-ring"></div>
+            <div class="landing-ring landing-ring-2"></div>
           </div>
         </div>
-        <div class="side-block">
-          <div class="block-title">Status</div>
-          <div class="status-grid">
-            <div class="stat-card">
-              <div class="stat-label">Current State</div>
-              <div class="stat-value" id="infoState">—</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Symbol Read</div>
-              <div class="stat-value amber" id="infoSymbol">—</div>
-            </div>
-            <div class="step-card">
-              <div class="step-text" id="infoStep">0 / 0</div>
-              <div class="step-bar-bg"><div class="step-bar-fill" id="stepBar"></div></div>
-            </div>
-          </div>
-        </div>
-        <div class="side-block">
-          <div class="block-title">Controls</div>
-          <div class="ctrl-row">
-            <button class="ctrl-btn play-btn" id="playBtn">▶ Play</button>
-            <button class="ctrl-btn" id="stepBtn">Step ⏭</button>
-            <button class="ctrl-btn" id="resetBtn">↺ Reset</button>
-          </div>
-          <div class="speed-row">
-            <span class="speed-label">Speed</span>
-            <input type="range" id="speedSlider" min="1" max="5" value="3" />
-            <span class="speed-val" id="speedVal">3×</span>
-          </div>
-        </div>
-        <div class="log-wrap">
-          <div class="log-title">Execution Log</div>
-          <div id="logList"></div>
-        </div>
-        <div id="resultBanner"></div>
+        <h1 class="landing-title">Automata Visualizer</h1>
+        <p class="landing-sub">DFA &nbsp;•&nbsp; CFG &nbsp;•&nbsp; PDA &nbsp;Interactive Simulator</p>
+        <div class="landing-divider"></div>
+        <button id="enterBtn" class="landing-btn">
+          <span class="landing-btn-text">Enter System</span>
+          <span class="landing-btn-arrow">→</span>
+        </button>
+        <p class="landing-footer">Formal Languages &amp; Automata Theory</p>
       </div>
     </div>
 
     <!-- ══════════════════════════════════════
-         PANEL: CFG
+         MAIN APP (hidden until landing dismissed)
     ══════════════════════════════════════ -->
-    <div class="placeholder-panel" id="panel-cfg">
+    <div id="main-app" style="display:none; flex-direction:column; height:100%;">
 
-      <!-- ── {a,b} CFG content ── -->
-      <div class="ip-wrap" id="cfg-ab">
-        <div class="ip-header">
-          <div class="ip-header-row">
-            <span class="ip-badge">CFG</span>
-            <span class="ip-badge-label">Context-Free Grammar &nbsp;·&nbsp; Σ = {a, b}</span>
-          </div>
-          <div class="ip-formula">
-            <span class="ip-var ip-var-start">S</span>
-            <span class="ip-arrow">→</span>
-            <span class="ip-var">A</span><span class="ip-var">B</span><span class="ip-var">C</span>
-            <span class="ip-var">D</span><span class="ip-var">E</span><span class="ip-var">F</span>
-            <span class="ip-var">G</span>
-          </div>
-          <div class="ip-meta">Variables: S, A, B, C, D, E, F, G &nbsp;·&nbsp; Terminals: a, b &nbsp;·&nbsp; Start symbol: S</div>
+      <!-- ── HEADER ── -->
+      <header>
+        <div class="h-brand">
+          <div class="h-planet-icon"><div class="planet-ring"></div></div>
+          <span class="h-title">Automata Visualizer</span>
         </div>
-        <div class="ip-table">
-          <div class="ip-trow ip-thead">
-            <span class="ip-col-var">Var</span>
-            <span class="ip-col-prod">Production Rules</span>
-            <span class="ip-col-rx">Regex Part</span>
-          </div>
-          <div class="ip-trow">
-            <span class="ip-col-var"><span class="ip-chip ip-chip-start">S</span></span>
-            <span class="ip-col-prod"><span class="ip-tok">A B C D E F G</span></span>
-            <span class="ip-col-rx"><span class="ip-rx">full regex</span></span>
-          </div>
-          <div class="ip-trow ip-alt">
-            <span class="ip-col-var"><span class="ip-chip">A</span></span>
-            <span class="ip-col-prod">
-              <span class="ip-tok">aa</span><span class="ip-bar">|</span><span class="ip-tok">bb</span>
-            </span>
-            <span class="ip-col-rx"><span class="ip-rx">(aa + bb)</span></span>
-          </div>
-          <div class="ip-trow">
-            <span class="ip-col-var"><span class="ip-chip">B</span></span>
-            <span class="ip-col-prod">
-              <span class="ip-tok">aB</span><span class="ip-bar">|</span>
-              <span class="ip-tok">bB</span><span class="ip-bar">|</span>
-              <span class="ip-tok ip-eps">Λ</span>
-            </span>
-            <span class="ip-col-rx"><span class="ip-rx">(a + b)*</span></span>
-          </div>
-          <div class="ip-trow ip-alt">
-            <span class="ip-col-var"><span class="ip-chip">C</span></span>
-            <span class="ip-col-prod">
-              <span class="ip-tok">a</span><span class="ip-bar">|</span><span class="ip-tok">b</span><span class="ip-bar">|</span>
-              <span class="ip-tok">ab</span><span class="ip-bar">|</span><span class="ip-tok">ba</span>
-            </span>
-            <span class="ip-col-rx"><span class="ip-rx">(a + b + ab + ba)</span></span>
-          </div>
-          <div class="ip-trow">
-            <span class="ip-col-var"><span class="ip-chip">D</span></span>
-            <span class="ip-col-prod">
-              <span class="ip-tok">CD</span><span class="ip-bar">|</span><span class="ip-tok ip-eps">Λ</span>
-            </span>
-            <span class="ip-col-rx"><span class="ip-rx">(a + b + ab + ba)*</span></span>
-          </div>
-          <div class="ip-trow ip-alt">
-            <span class="ip-col-var"><span class="ip-chip">E</span></span>
-            <span class="ip-col-prod">
-              <span class="ip-tok">aaE</span><span class="ip-bar">|</span>
-              <span class="ip-tok">babE</span><span class="ip-bar">|</span>
-              <span class="ip-tok ip-eps">Λ</span>
-            </span>
-            <span class="ip-col-rx"><span class="ip-rx">(aa + bab)*</span></span>
-          </div>
-          <div class="ip-trow">
-            <span class="ip-col-var"><span class="ip-chip">F</span></span>
-            <span class="ip-col-prod">
-              <span class="ip-tok">a</span><span class="ip-bar">|</span>
-              <span class="ip-tok">b</span><span class="ip-bar">|</span>
-              <span class="ip-tok">aa</span>
-            </span>
-            <span class="ip-col-rx"><span class="ip-rx">(a + b + aa)</span></span>
-          </div>
-          <div class="ip-trow ip-alt">
-            <span class="ip-col-var"><span class="ip-chip">G</span></span>
-            <span class="ip-col-prod">
-              <span class="ip-tok">aG</span><span class="ip-bar">|</span><span class="ip-tok">bG</span><span class="ip-bar">|</span>
-              <span class="ip-tok">bbG</span><span class="ip-bar">|</span><span class="ip-tok">aaG</span><span class="ip-bar">|</span>
-              <span class="ip-tok ip-eps">Λ</span>
-            </span>
-            <span class="ip-col-rx"><span class="ip-rx">(a + b + bb + aa)*</span></span>
+        <nav class="tab-nav">
+          <button class="tab-btn active" data-tab="ab">Σ = {a, b}</button>
+          <button class="tab-btn" data-tab="01">Σ = {0, 1}</button>
+        </nav>
+        <div class="h-regex" id="headerRegex"></div>
+      </header>
+
+      <!-- ── SUB-TAB BAR ── -->
+      <div class="sub-tab-bar">
+        <button class="sub-tab active" id="sub-dfa" onclick="switchSubTab('dfa')">DFA</button>
+        <button class="sub-tab" id="sub-cfg" onclick="switchSubTab('cfg')">CFG</button>
+        <button class="sub-tab" id="sub-pda" onclick="switchSubTab('pda')">PDA</button>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           PANEL: DFA
+      ══════════════════════════════════════ -->
+      <div class="app" id="panel-dfa">
+        <div class="canvas-wrap">
+          <canvas id="dfaCanvas"></canvas>
+          <div class="tape-row">
+            <div class="tape-label">Tape</div>
+            <div class="tape-cells" id="tape"></div>
+            <div class="tape-pointer" id="tapePointer">pos <span>—</span></div>
           </div>
         </div>
-        <div class="ip-notes">
-          <div class="ip-note"><span class="ip-note-key">Λ</span><span class="ip-note-val">empty string (epsilon) — variable derives nothing</span></div>
-          <div class="ip-note"><span class="ip-note-key">S → A B C D E F G</span><span class="ip-note-val">each variable covers exactly one part of the regex in order</span></div>
-          <div class="ip-note ip-note-ok"><span class="ip-note-key">✓ Verified</span><span class="ip-note-val">all 7 parts correct and validated</span></div>
-        </div>
-      </div><!-- /#cfg-ab -->
 
-      <!-- ── {0,1} CFG content ── -->
-      <div class="ip-wrap" id="cfg-01" style="display:none;">
-        <div class="ip-header">
-          <div class="ip-header-row">
-            <span class="ip-badge">CFG</span>
-            <span class="ip-badge-label">Context-Free Grammar &nbsp;·&nbsp; Σ = {0, 1}</span>
+        <!-- DFA SIDEBAR -->
+        <div class="side">
+          <div class="side-block">
+            <div class="block-title">Input String</div>
+            <div class="input-group">
+              <input id="inputString" type="text" placeholder="e.g. aab" value="aab"
+                maxlength="40" spellcheck="false" autocomplete="off" />
+              <button id="loadBtn">Load</button>
+            </div>
           </div>
-          <div class="ip-formula">
-            <span class="ip-var ip-var-start">S</span>
-            <span class="ip-arrow">→</span>
-            <span class="ip-var">A</span><span class="ip-var">B</span>
-            <span class="ip-var">C</span><span class="ip-var">D</span>
-          </div>
-          <div class="ip-meta">Variables: S, A, B, C, D, E, F &nbsp;·&nbsp; Terminals: 0, 1 &nbsp;·&nbsp; Start symbol: S</div>
-        </div>
 
-        <div class="ip-table">
-          <!-- header -->
-          <div class="ip-trow ip-thead">
-            <span class="ip-col-var">Var</span>
-            <span class="ip-col-prod">Production Rules</span>
-            <span class="ip-col-rx">Regex Part</span>
+          <div class="side-block">
+            <div class="block-title">Status</div>
+            <div class="status-grid">
+              <div class="stat-card">
+                <div class="stat-label">Current State</div>
+                <div class="stat-value" id="infoState">—</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Symbol Read</div>
+                <div class="stat-value amber" id="infoSymbol">—</div>
+              </div>
+              <div class="step-card">
+                <div class="step-text" id="infoStep">0 / 0</div>
+                <div class="step-bar-bg"><div class="step-bar-fill" id="stepBar"></div></div>
+              </div>
+            </div>
           </div>
-          <!-- S -->
-          <div class="ip-trow">
-            <span class="ip-col-var"><span class="ip-chip ip-chip-start">S</span></span>
-            <span class="ip-col-prod"><span class="ip-tok">A B C D</span></span>
-            <span class="ip-col-rx"><span class="ip-rx">full regex</span></span>
-          </div>
-          <!-- A -->
-          <div class="ip-trow ip-alt">
-            <span class="ip-col-var"><span class="ip-chip">A</span></span>
-            <span class="ip-col-prod">
-              <span class="ip-tok">101</span><span class="ip-bar">|</span>
-              <span class="ip-tok">100</span><span class="ip-bar">|</span>
-              <span class="ip-tok">E</span><span class="ip-bar">|</span>
-              <span class="ip-tok">F</span>
-            </span>
-            <span class="ip-col-rx"><span class="ip-rx">((101)+(111)*+100)+(1+0+11)*</span></span>
-          </div>
-          <!-- E -->
-          <div class="ip-trow">
-            <span class="ip-col-var"><span class="ip-chip">E</span></span>
-            <span class="ip-col-prod">
-              <span class="ip-tok">111E</span><span class="ip-bar">|</span>
-              <span class="ip-tok ip-eps">Λ</span>
-            </span>
-            <span class="ip-col-rx"><span class="ip-rx">(111)*</span></span>
-          </div>
-          <!-- F -->
-          <div class="ip-trow ip-alt">
-            <span class="ip-col-var"><span class="ip-chip">F</span></span>
-            <span class="ip-col-prod">
-              <span class="ip-tok">1F</span><span class="ip-bar">|</span>
-              <span class="ip-tok">0F</span><span class="ip-bar">|</span>
-              <span class="ip-tok">11F</span><span class="ip-bar">|</span>
-              <span class="ip-tok ip-eps">Λ</span>
-            </span>
-            <span class="ip-col-rx"><span class="ip-rx">(1 + 0 + 11)*</span></span>
-          </div>
-          <!-- B -->
-          <div class="ip-trow">
-            <span class="ip-col-var"><span class="ip-chip">B</span></span>
-            <span class="ip-col-prod">
-              <span class="ip-tok">1B</span><span class="ip-bar">|</span>
-              <span class="ip-tok">0B</span><span class="ip-bar">|</span>
-              <span class="ip-tok">01B</span><span class="ip-bar">|</span>
-              <span class="ip-tok ip-eps">Λ</span>
-            </span>
-            <span class="ip-col-rx"><span class="ip-rx">(1 + 0 + 01)*</span></span>
-          </div>
-          <!-- C -->
-          <div class="ip-trow ip-alt">
-            <span class="ip-col-var"><span class="ip-chip">C</span></span>
-            <span class="ip-col-prod">
-              <span class="ip-tok">111</span><span class="ip-bar">|</span>
-              <span class="ip-tok">000</span><span class="ip-bar">|</span>
-              <span class="ip-tok">101</span>
-            </span>
-            <span class="ip-col-rx"><span class="ip-rx">(111 + 000 + 101)</span></span>
-          </div>
-          <!-- D -->
-          <div class="ip-trow">
-            <span class="ip-col-var"><span class="ip-chip">D</span></span>
-            <span class="ip-col-prod">
-              <span class="ip-tok">1D</span><span class="ip-bar">|</span>
-              <span class="ip-tok">0D</span><span class="ip-bar">|</span>
-              <span class="ip-tok ip-eps">Λ</span>
-            </span>
-            <span class="ip-col-rx"><span class="ip-rx">(1 + 0)*</span></span>
-          </div>
-        </div><!-- /ip-table -->
 
-        <div class="ip-notes">
-          <div class="ip-note"><span class="ip-note-key">Λ</span><span class="ip-note-val">empty string (epsilon) — variable derives nothing</span></div>
-          <div class="ip-note"><span class="ip-note-key">S → A B C D</span><span class="ip-note-val">each variable covers exactly one part of the regex in sequence</span></div>
-          <div class="ip-note"><span class="ip-note-key">C is mandatory</span><span class="ip-note-val">no Λ production — must produce exactly one of 111, 000, or 101</span></div>
-          <div class="ip-note ip-note-ok"><span class="ip-note-key">✓ Verified</span><span class="ip-note-val">all 4 parts correct and validated</span></div>
-        </div>
-      </div><!-- /#cfg-01 -->
+          <div class="side-block">
+            <div class="block-title">Controls</div>
+            <div class="ctrl-row">
+              <button class="ctrl-btn play-btn" id="playBtn">▶ Play</button>
+              <button class="ctrl-btn" id="stepBtn">Step ⏭</button>
+              <button class="ctrl-btn" id="resetBtn">↺ Reset</button>
+            </div>
+            <div class="speed-row">
+              <span class="speed-label">Speed</span>
+              <input type="range" id="speedSlider" min="1" max="5" value="3" />
+              <span class="speed-val" id="speedVal">3×</span>
+            </div>
+          </div>
 
-    </div><!-- /#panel-cfg -->
-
-    <!-- ══════════════════════════════════════
-         PANEL: PDA (INTERACTIVE)
-    ══════════════════════════════════════ -->
-    <div class="app" id="panel-pda" style="display: none;">
-      <div class="canvas-wrap">
-        <canvas id="pdaCanvas"></canvas>
-        <div class="tape-row">
-          <div class="tape-label">Tape</div>
-          <div class="tape-cells" id="pdaTape"></div>
-          <div class="tape-pointer" id="pdaTapePointer">pos <span>—</span></div>
+          <div class="log-wrap">
+            <div class="log-title">Execution Log</div>
+            <div id="logList"></div>
+          </div>
+          <div id="resultBanner"></div>
         </div>
       </div>
-      <div class="side">
-        <div class="side-block">
-          <div class="block-title">Input String</div>
-          <div class="input-group">
-            <input id="pdaInputString" type="text" placeholder="e.g. aab" value="aab"
-              maxlength="40" spellcheck="false" autocomplete="off" />
-            <button id="pdaLoadBtn">Load</button>
-          </div>
-        </div>
-        <div class="side-block">
-          <div class="block-title">Status</div>
-          <div class="status-grid">
-            <div class="stat-card">
-              <div class="stat-label">Current State</div>
-              <div class="stat-value" id="pdaInfoState">—</div>
+
+      <!-- ══════════════════════════════════════
+           PANEL: CFG
+      ══════════════════════════════════════ -->
+      <div class="placeholder-panel" id="panel-cfg">
+        <!-- ── {a,b} CFG content ── -->
+        <div class="ip-wrap" id="cfg-ab">
+          <div class="ip-header">
+            <div class="ip-header-row">
+              <span class="ip-badge">CFG</span>
+              <span class="ip-badge-label">Context-Free Grammar &nbsp;·&nbsp; Σ = {a, b}</span>
             </div>
-            <div class="stat-card">
-              <div class="stat-label">Symbol Read</div>
-              <div class="stat-value amber" id="pdaInfoSymbol">—</div>
+            <div class="ip-formula">
+              <span class="ip-var ip-var-start">S</span>
+              <span class="ip-arrow">→</span>
+              <span class="ip-var">A</span><span class="ip-var">B</span><span class="ip-var">C</span>
+              <span class="ip-var">D</span><span class="ip-var">E</span><span class="ip-var">F</span>
+              <span class="ip-var">G</span>
             </div>
-            <div class="step-card">
-              <div class="step-text" id="pdaInfoStep">0 / 0</div>
-              <div class="step-bar-bg"><div class="step-bar-fill" id="pdaStepBar"></div></div>
+            <div class="ip-meta">Variables: S, A, B, C, D, E, F, G &nbsp;·&nbsp; Terminals: a, b &nbsp;·&nbsp; Start symbol: S</div>
+          </div>
+          <div class="ip-table">
+            <div class="ip-trow ip-thead">
+              <span class="ip-col-var">Var</span>
+              <span class="ip-col-prod">Production Rules</span>
+              <span class="ip-col-rx">Regex Part</span>
+            </div>
+            <div class="ip-trow">
+              <span class="ip-col-var"><span class="ip-chip ip-chip-start">S</span></span>
+              <span class="ip-col-prod"><span class="ip-tok">A B C D E F G</span></span>
+              <span class="ip-col-rx"><span class="ip-rx">full regex</span></span>
+            </div>
+            <div class="ip-trow ip-alt">
+              <span class="ip-col-var"><span class="ip-chip">A</span></span>
+              <span class="ip-col-prod">
+                <span class="ip-tok">aa</span><span class="ip-bar">|</span><span class="ip-tok">bb</span>
+              </span>
+              <span class="ip-col-rx"><span class="ip-rx">(aa + bb)</span></span>
+            </div>
+            <div class="ip-trow">
+              <span class="ip-col-var"><span class="ip-chip">B</span></span>
+              <span class="ip-col-prod">
+                <span class="ip-tok">aB</span><span class="ip-bar">|</span>
+                <span class="ip-tok">bB</span><span class="ip-bar">|</span>
+                <span class="ip-tok ip-eps">Λ</span>
+              </span>
+              <span class="ip-col-rx"><span class="ip-rx">(a + b)*</span></span>
+            </div>
+            <div class="ip-trow ip-alt">
+              <span class="ip-col-var"><span class="ip-chip">C</span></span>
+              <span class="ip-col-prod">
+                <span class="ip-tok">a</span><span class="ip-bar">|</span><span class="ip-tok">b</span><span class="ip-bar">|</span>
+                <span class="ip-tok">ab</span><span class="ip-bar">|</span><span class="ip-tok">ba</span>
+              </span>
+              <span class="ip-col-rx"><span class="ip-rx">(a + b + ab + ba)</span></span>
+            </div>
+            <div class="ip-trow">
+              <span class="ip-col-var"><span class="ip-chip">D</span></span>
+              <span class="ip-col-prod">
+                <span class="ip-tok">CD</span><span class="ip-bar">|</span><span class="ip-tok ip-eps">Λ</span>
+              </span>
+              <span class="ip-col-rx"><span class="ip-rx">(a + b + ab + ba)*</span></span>
+            </div>
+            <div class="ip-trow ip-alt">
+              <span class="ip-col-var"><span class="ip-chip">E</span></span>
+              <span class="ip-col-prod">
+                <span class="ip-tok">aaE</span><span class="ip-bar">|</span>
+                <span class="ip-tok">babE</span><span class="ip-bar">|</span>
+                <span class="ip-tok ip-eps">Λ</span>
+              </span>
+              <span class="ip-col-rx"><span class="ip-rx">(aa + bab)*</span></span>
+            </div>
+            <div class="ip-trow">
+              <span class="ip-col-var"><span class="ip-chip">F</span></span>
+              <span class="ip-col-prod">
+                <span class="ip-tok">a</span><span class="ip-bar">|</span>
+                <span class="ip-tok">b</span><span class="ip-bar">|</span>
+                <span class="ip-tok">aa</span>
+              </span>
+              <span class="ip-col-rx"><span class="ip-rx">(a + b + aa)</span></span>
+            </div>
+            <div class="ip-trow ip-alt">
+              <span class="ip-col-var"><span class="ip-chip">G</span></span>
+              <span class="ip-col-prod">
+                <span class="ip-tok">aG</span><span class="ip-bar">|</span><span class="ip-tok">bG</span><span class="ip-bar">|</span>
+                <span class="ip-tok">bbG</span><span class="ip-bar">|</span><span class="ip-tok">aaG</span><span class="ip-bar">|</span>
+                <span class="ip-tok ip-eps">Λ</span>
+              </span>
+              <span class="ip-col-rx"><span class="ip-rx">(a + b + bb + aa)*</span></span>
             </div>
           </div>
-        </div>
-        <div class="side-block">
-          <div class="block-title">Controls</div>
-          <div class="ctrl-row">
-            <button class="ctrl-btn play-btn" id="pdaPlayBtn">▶ Play</button>
-            <button class="ctrl-btn" id="pdaStepBtn">Step ⏭</button>
-            <button class="ctrl-btn" id="pdaResetBtn">↺ Reset</button>
-          </div>
-          <div class="speed-row">
-            <span class="speed-label">Speed</span>
-            <input type="range" id="pdaSpeedSlider" min="1" max="5" value="3" />
-            <span class="speed-val" id="pdaSpeedVal">3×</span>
+          <div class="ip-notes">
+            <div class="ip-note"><span class="ip-note-key">Λ</span><span class="ip-note-val">empty string (epsilon) — variable derives nothing</span></div>
+            <div class="ip-note"><span class="ip-note-key">S → A B C D E F G</span><span class="ip-note-val">each variable covers exactly one part of the regex in order</span></div>
+            <div class="ip-note ip-note-ok"><span class="ip-note-key">✓ Verified</span><span class="ip-note-val">all 7 parts correct and validated</span></div>
           </div>
         </div>
-        <div class="log-wrap">
-          <div class="log-title">Execution Log</div>
-          <div id="pdaLogList"></div>
+
+        <!-- ── {0,1} CFG content ── -->
+        <div class="ip-wrap" id="cfg-01" style="display:none;">
+          <div class="ip-header">
+            <div class="ip-header-row">
+              <span class="ip-badge">CFG</span>
+              <span class="ip-badge-label">Context-Free Grammar &nbsp;·&nbsp; Σ = {0, 1}</span>
+            </div>
+            <div class="ip-formula">
+              <span class="ip-var ip-var-start">S</span>
+              <span class="ip-arrow">→</span>
+              <span class="ip-var">A</span><span class="ip-var">B</span>
+              <span class="ip-var">C</span><span class="ip-var">D</span>
+            </div>
+            <div class="ip-meta">Variables: S, A, B, C, D, E, F &nbsp;·&nbsp; Terminals: 0, 1 &nbsp;·&nbsp; Start symbol: S</div>
+          </div>
+          <div class="ip-table">
+            <div class="ip-trow ip-thead">
+              <span class="ip-col-var">Var</span>
+              <span class="ip-col-prod">Production Rules</span>
+              <span class="ip-col-rx">Regex Part</span>
+            </div>
+            <div class="ip-trow">
+              <span class="ip-col-var"><span class="ip-chip ip-chip-start">S</span></span>
+              <span class="ip-col-prod"><span class="ip-tok">A B C D</span></span>
+              <span class="ip-col-rx"><span class="ip-rx">full regex</span></span>
+            </div>
+            <div class="ip-trow ip-alt">
+              <span class="ip-col-var"><span class="ip-chip">A</span></span>
+              <span class="ip-col-prod">
+                <span class="ip-tok">101</span><span class="ip-bar">|</span>
+                <span class="ip-tok">100</span><span class="ip-bar">|</span>
+                <span class="ip-tok">E</span><span class="ip-bar">|</span>
+                <span class="ip-tok">F</span>
+              </span>
+              <span class="ip-col-rx"><span class="ip-rx">((101)+(111)*+100)+(1+0+11)*</span></span>
+            </div>
+            <div class="ip-trow">
+              <span class="ip-col-var"><span class="ip-chip">E</span></span>
+              <span class="ip-col-prod">
+                <span class="ip-tok">111E</span><span class="ip-bar">|</span>
+                <span class="ip-tok ip-eps">Λ</span>
+              </span>
+              <span class="ip-col-rx"><span class="ip-rx">(111)*</span></span>
+            </div>
+            <div class="ip-trow ip-alt">
+              <span class="ip-col-var"><span class="ip-chip">F</span></span>
+              <span class="ip-col-prod">
+                <span class="ip-tok">1F</span><span class="ip-bar">|</span>
+                <span class="ip-tok">0F</span><span class="ip-bar">|</span>
+                <span class="ip-tok">11F</span><span class="ip-bar">|</span>
+                <span class="ip-tok ip-eps">Λ</span>
+              </span>
+              <span class="ip-col-rx"><span class="ip-rx">(1 + 0 + 11)*</span></span>
+            </div>
+            <div class="ip-trow">
+              <span class="ip-col-var"><span class="ip-chip">B</span></span>
+              <span class="ip-col-prod">
+                <span class="ip-tok">1B</span><span class="ip-bar">|</span>
+                <span class="ip-tok">0B</span><span class="ip-bar">|</span>
+                <span class="ip-tok">01B</span><span class="ip-bar">|</span>
+                <span class="ip-tok ip-eps">Λ</span>
+              </span>
+              <span class="ip-col-rx"><span class="ip-rx">(1 + 0 + 01)*</span></span>
+            </div>
+            <div class="ip-trow ip-alt">
+              <span class="ip-col-var"><span class="ip-chip">C</span></span>
+              <span class="ip-col-prod">
+                <span class="ip-tok">111</span><span class="ip-bar">|</span>
+                <span class="ip-tok">000</span><span class="ip-bar">|</span>
+                <span class="ip-tok">101</span>
+              </span>
+              <span class="ip-col-rx"><span class="ip-rx">(111 + 000 + 101)</span></span>
+            </div>
+            <div class="ip-trow">
+              <span class="ip-col-var"><span class="ip-chip">D</span></span>
+              <span class="ip-col-prod">
+                <span class="ip-tok">1D</span><span class="ip-bar">|</span>
+                <span class="ip-tok">0D</span><span class="ip-bar">|</span>
+                <span class="ip-tok ip-eps">Λ</span>
+              </span>
+              <span class="ip-col-rx"><span class="ip-rx">(1 + 0)*</span></span>
+            </div>
+          </div>
+          <div class="ip-notes">
+            <div class="ip-note"><span class="ip-note-key">Λ</span><span class="ip-note-val">empty string (epsilon) — variable derives nothing</span></div>
+            <div class="ip-note"><span class="ip-note-key">S → A B C D</span><span class="ip-note-val">each variable covers exactly one part of the regex in sequence</span></div>
+            <div class="ip-note"><span class="ip-note-key">C is mandatory</span><span class="ip-note-val">no Λ production — must produce exactly one of 111, 000, or 101</span></div>
+            <div class="ip-note ip-note-ok"><span class="ip-note-key">✓ Verified</span><span class="ip-note-val">all 4 parts correct and validated</span></div>
+          </div>
         </div>
-        <div id="pdaResultBanner"></div>
       </div>
-    </div>
+
+      <!-- ══════════════════════════════════════
+           PANEL: PDA (INTERACTIVE)
+      ══════════════════════════════════════ -->
+      <div class="app" id="panel-pda" style="display: none;">
+        <div class="canvas-wrap">
+          <canvas id="pdaCanvas"></canvas>
+          <div class="tape-row">
+            <div class="tape-label">Tape</div>
+            <div class="tape-cells" id="pdaTape"></div>
+            <div class="tape-pointer" id="pdaTapePointer">pos <span>—</span></div>
+          </div>
+        </div>
+
+        <!-- PDA SIDEBAR — matches DFA sidebar exactly -->
+        <div class="side">
+          <div class="side-block">
+            <div class="block-title">Input String</div>
+            <div class="input-group">
+              <input id="pdaInputString" type="text" placeholder="e.g. aab" value="aab"
+                maxlength="40" spellcheck="false" autocomplete="off" />
+              <button id="pdaLoadBtn">Load</button>
+            </div>
+          </div>
+
+          <div class="side-block">
+            <div class="block-title">Status</div>
+            <div class="status-grid">
+              <div class="stat-card">
+                <div class="stat-label">Current State</div>
+                <div class="stat-value" id="pdaInfoState">—</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Symbol Read</div>
+                <div class="stat-value amber" id="pdaInfoSymbol">—</div>
+              </div>
+              <div class="step-card">
+                <div class="step-text" id="pdaInfoStep">0 / 0</div>
+                <div class="step-bar-bg"><div class="step-bar-fill" id="pdaStepBar"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="side-block">
+            <div class="block-title">Controls</div>
+            <div class="ctrl-row">
+              <button class="ctrl-btn play-btn" id="pdaPlayBtn">▶ Play</button>
+              <button class="ctrl-btn" id="pdaStepBtn">Step ⏭</button>
+              <button class="ctrl-btn" id="pdaResetBtn">↺ Reset</button>
+            </div>
+            <div class="speed-row">
+              <span class="speed-label">Speed</span>
+              <input type="range" id="pdaSpeedSlider" min="1" max="5" value="3" />
+              <span class="speed-val" id="pdaSpeedVal">3×</span>
+            </div>
+          </div>
+
+          <div class="log-wrap">
+            <div class="log-title">Execution Log</div>
+            <div id="pdaLogList"></div>
+          </div>
+          <div id="pdaResultBanner"></div>
+        </div>
+      </div>
+
+    </div><!-- /#main-app -->
 
     <script src="script.js"></script>
   </body>
