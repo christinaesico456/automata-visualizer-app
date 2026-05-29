@@ -40,23 +40,34 @@
         word-break: break-word;
       }
 
-      /* Table layout */
-      .ip-table {
-        width: 100%;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-      }
-
+      /* Table rows always flex inline */
       .ip-trow {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         gap: 6px;
         flex-wrap: nowrap;
       }
 
-      .ip-col-var  { flex: 0 0 36px; min-width: 36px; }
-      .ip-col-prod { flex: 1 1 auto; min-width: 0; flex-wrap: wrap; display: flex; align-items: center; gap: 3px; }
-      .ip-col-rx   { flex: 0 0 auto; min-width: 80px; max-width: 140px; }
+      /* Production col: inline flex so tokens sit side by side */
+      .ip-col-prod {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 3px;
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      /* Tokens must never become block elements */
+      .ip-tok {
+        display: inline-block;
+        white-space: nowrap;
+      }
+
+      .ip-bar {
+        display: inline-block;
+      }
 
       /* Notes wrap properly */
       .ip-note {
@@ -75,15 +86,9 @@
       /* ── Mobile breakpoint ── */
       @media (max-width: 600px) {
 
-        /* Stack header row */
         .ip-header-row {
           flex-wrap: wrap;
           gap: 4px;
-        }
-
-        /* On very small screens, stack Regex Part below production */
-        .ip-trow {
-          flex-wrap: wrap;
         }
 
         .ip-col-var {
@@ -92,24 +97,22 @@
         }
 
         .ip-col-prod {
-          flex: 1 1 calc(100% - 44px);
+          flex: 1 1 auto;
           min-width: 0;
         }
 
         .ip-col-rx {
-          flex: 0 0 100%;
-          padding-left: 38px; /* indent under var column */
-          max-width: 100%;
-          font-size: 10px;
-          opacity: 0.75;
+          flex: 0 0 auto;
+          min-width: 70px;
+          max-width: 110px;
+          font-size: 9px;
         }
 
-        /* Hide column headers on mobile, not enough space */
+        /* Hide thead on mobile */
         .ip-thead {
           display: none;
         }
 
-        /* Shrink tokens slightly */
         .ip-tok {
           font-size: 10px;
           padding: 1px 5px;
@@ -126,7 +129,6 @@
           font-size: 9px;
         }
 
-        /* Formula shrink */
         .ip-formula {
           font-size: 13px;
         }
@@ -136,7 +138,6 @@
           padding: 2px 5px;
         }
 
-        /* Notes */
         .ip-notes {
           font-size: 11px;
         }
@@ -150,12 +151,10 @@
           font-size: 10px;
         }
 
-        /* Wrap badge label */
         .ip-badge-label {
           font-size: 11px;
         }
 
-        /* ip-wrap padding */
         .ip-wrap {
           padding: 12px 10px;
         }
